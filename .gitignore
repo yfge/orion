@@ -1,0 +1,47 @@
+# OS / Editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+.venv/
+venv/
+env/
+.ruff_cache/
+.mypy_cache/
+.pytest_cache/
+coverage.xml
+.coverage
+htmlcov/
+dist/
+build/
+*.egg-info/
+
+# Environment
+.env
+.env.*
+.envrc
+
+# Node / Frontend
+node_modules/
+.next/
+.turbo/
+.vercel/
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-store/
+
+# Docker
+Docker/*.local
+Docker/.tmp/
+
+# Misc
+*.log
+**/.cache/
