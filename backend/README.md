@@ -18,3 +18,6 @@ Alembic
 Config
 - Edit `.env` at repo root or environment variables with prefix `ORION_`.
 - Key vars: `ORION_DATABASE_URL` (default `sqlite:///./orion.db`).
+- MySQL example:
+  - URL: `mysql+pymysql://user:password@localhost:3306/orion?charset=utf8mb4`
+  - Driver: PyMySQL (already included). `pool_pre_ping` is enabled to avoid stale connections.

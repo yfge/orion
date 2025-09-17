@@ -5,7 +5,11 @@ from sqlalchemy.orm import sessionmaker
 from ..core.config import settings
 
 
-engine = create_engine(settings.DATABASE_URL, future=True)
+engine = create_engine(
+    settings.DATABASE_URL,
+    future=True,
+    pool_pre_ping=True,  # helps with stale connections (e.g., MySQL timeouts)
+)
 SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False, future=True)
 
 
@@ -20,4 +24,3 @@ def session_scope():
         raise
     finally:
         session.close()
-
