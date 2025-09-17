@@ -41,6 +41,13 @@ Orion 是一个面向企业场景的统一通知网关：接收业务系统的�
 - 文档放置建议：整体架构在 `docs/architecture/`，模块文档在各模块目录下 `README.md`。
 - 与 AI 对话过程落库至 `agents_chat/`，便于审计与回溯（见下）。
 
+## 后端依赖与运行
+- 建议使用 conda 环境：`conda activate py311`
+- 安装后端依赖（任选其一）：
+  - 仓库根目录执行：`pip install -e backend`
+  - 或进入后端目录：`cd backend && pip install -e .`
+- 启动后端：`uvicorn backend.app.main:app --reload`
+
 ### 代理说明文件（统一链接）
 - 所有智能体说明文件统一链接（symlink）到根目录的 `AGENTS.md`：
   - `.CLAUDE.md`
