@@ -10,27 +10,28 @@ from ..repository import dispatches as disp_repo
 from ..repository import endpoints as ep_repo
 from .templating import render_value
 from .sender.http_sender import HttpSender
+from ..db.models import SendRecord, SendDetail, MessageDefinition
 
 
 def notify_by_name(db: Session, *, message_name: str, data: dict[str, Any]) -> list[dict[str, Any]]:
     msg = msg_repo.get_by_name(db, message_name)
     if not msg:
         raise ValueError("message not found")
-    return _notify(db, message_bid=msg.message_definition_bid, schema=msg.schema or {}, data=data)
+    return _notify(db, message=msg, schema=msg.schema or {}, data=data)
 
 
 def notify_by_bid(db: Session, *, message_bid: str, data: dict[str, Any]) -> list[dict[str, Any]]:
     msg = msg_repo.get_by_bid(db, message_bid)
     if not msg:
         raise ValueError("message not found")
-    return _notify(db, message_bid=message_bid, schema=msg.schema or {}, data=data)
+    return _notify(db, message=msg, schema=msg.schema or {}, data=data)
 
 
-def _notify(db: Session, *, message_bid: str, schema: dict[str, Any], data: dict[str, Any]) -> list[dict[str, Any]]:
+def _notify(db: Session, *, message: MessageDefinition, schema: dict[str, Any], data: dict[str, Any]) -> list[dict[str, Any]]:
     # Render base payload from message schema
     base_payload = render_value(schema, data)
     # Fetch dispatches
-    dispatches, _ = disp_repo.list_by_message(db, message_bid=message_bid, limit=1000, offset=0)
+    dispatches, _ = disp_repo.list_by_message(db, message_bid=message.message_definition_bid, limit=1000, offset=0)
     results: list[dict[str, Any]] = []
     http_sender = HttpSender()
     for d in dispatches:
@@ -39,6 +40,14 @@ def _notify(db: Session, *, message_bid: str, schema: dict[str, Any], data: dict
         ep = ep_repo.get_by_bid(db, getattr(d, "endpoint_bid", None) or "")
         if not ep:
             continue
+        # Prepare SendRecord
+        send_record = SendRecord(
+            message_definition_bid=message.message_definition_bid,
+            notification_api_bid=ep.notification_api_bid,
+            status=0,
+        )
+        db.add(send_record)
+        db.flush()
         endpoint_dict = {
             "adapter_key": ep.adapter_key or "http.generic",
             "endpoint_url": ep.endpoint_url,
@@ -59,6 +68,26 @@ def _notify(db: Session, *, message_bid: str, schema: dict[str, Any], data: dict
 
         try:
             res = http_sender.send(endpoint=endpoint_dict, payload=payload)
+            body = res.get("body")
+            if isinstance(body, str):
+                result_body: Any = {"raw": body}
+            else:
+                result_body = body
+            # Update record and add detail
+            send_record.status = 1
+            send_record.send_time = datetime.utcnow()
+            send_record.result = result_body
+            detail = SendDetail(
+                send_record_bid=send_record.send_record_bid,
+                notification_api_bid=ep.notification_api_bid,
+                attempt_no=1,
+                request_payload=payload if isinstance(payload, dict) else {"raw": str(payload)},
+                response_payload=result_body,
+                status=1,
+                sent_at=datetime.utcnow(),
+                error=None,
+            )
+            db.add(detail)
             results.append({
                 "dispatch_bid": d.message_dispatch_bid,
                 "endpoint_bid": getattr(d, "endpoint_bid", None),
@@ -66,6 +95,19 @@ def _notify(db: Session, *, message_bid: str, schema: dict[str, Any], data: dict
                 "body": res.get("body"),
             })
         except Exception as e:  # pragma: no cover
+            # failure detail
+            detail = SendDetail(
+                send_record_bid=send_record.send_record_bid,
+                notification_api_bid=ep.notification_api_bid,
+                attempt_no=1,
+                request_payload=payload if isinstance(payload, dict) else {"raw": str(payload)},
+                response_payload=None,
+                status=-1,
+                sent_at=datetime.utcnow(),
+                error=str(e),
+            )
+            db.add(detail)
+            send_record.status = -1
             results.append({
                 "dispatch_bid": d.message_dispatch_bid,
                 "endpoint_bid": getattr(d, "endpoint_bid", None),
@@ -73,4 +115,3 @@ def _notify(db: Session, *, message_bid: str, schema: dict[str, Any], data: dict
             })
 
     return results
-

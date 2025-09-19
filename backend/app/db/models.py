@@ -48,7 +48,9 @@ class BusinessSystem(Base, BaseFieldsMixin):
     app_secret: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
     apis: Mapped[list["NotificationAPI"]] = relationship(
-        back_populates="business_system", cascade="all, delete-orphan"
+        "NotificationAPI",
+        viewonly=True,
+        primaryjoin="foreign(NotificationAPI.business_system_bid)==BusinessSystem.business_system_bid",
     )
 
 
@@ -58,9 +60,7 @@ class NotificationAPI(Base, BaseFieldsMixin):
     notification_api_bid: Mapped[str] = mapped_column(
         String(32), unique=True, index=True, default=gen_bid, nullable=False
     )
-    business_system_id: Mapped[int] = mapped_column(
-        ForeignKey("business_systems.id", ondelete="RESTRICT"), nullable=False
-    )
+    business_system_bid: Mapped[str] = mapped_column(String(32), index=True, nullable=False)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     endpoint_url: Mapped[str] = mapped_column(String(1024), nullable=False)
     request_schema: Mapped[dict | None] = mapped_column(JSON, nullable=True)
@@ -70,12 +70,10 @@ class NotificationAPI(Base, BaseFieldsMixin):
     transport: Mapped[str | None] = mapped_column(String(16), nullable=True)  # e.g., http, mq
     adapter_key: Mapped[str | None] = mapped_column(String(64), nullable=True)  # e.g., http.generic, mq.kafka
     config: Mapped[dict | None] = mapped_column(JSON, nullable=True)  # adapter-specific
-    auth_profile_id: Mapped[int | None] = mapped_column(nullable=True)  # FK added in later migration
+    auth_profile_bid: Mapped[str | None] = mapped_column(String(32), nullable=True, index=True)
 
-    business_system: Mapped[BusinessSystem] = relationship(back_populates="apis")
-    dispatches: Mapped[list["MessageDispatch"]] = relationship(
-        back_populates="notification_api", cascade="all, delete-orphan"
-    )
+    business_system: Mapped[BusinessSystem] = relationship(back_populates="apis", viewonly=True, primaryjoin="foreign(NotificationAPI.business_system_bid)==BusinessSystem.business_system_bid")
+    dispatches: Mapped[list["MessageDispatch"]] = relationship(back_populates="notification_api", viewonly=True, primaryjoin="foreign(MessageDispatch.notification_api_bid)==NotificationAPI.notification_api_bid")
 
 
 class Secret(Base, BaseFieldsMixin):
@@ -107,9 +105,7 @@ class MessageDefinition(Base, BaseFieldsMixin):
     type: Mapped[str | None] = mapped_column(String(64), nullable=True)
     schema: Mapped[dict | None] = mapped_column(JSON, nullable=True)
 
-    dispatches: Mapped[list["MessageDispatch"]] = relationship(
-        back_populates="message_definition", cascade="all, delete-orphan"
-    )
+    dispatches: Mapped[list["MessageDispatch"]] = relationship(back_populates="message_definition", viewonly=True, primaryjoin="foreign(MessageDispatch.message_definition_bid)==MessageDefinition.message_definition_bid")
 
 
 class MessageDispatch(Base, BaseFieldsMixin):
@@ -118,17 +114,13 @@ class MessageDispatch(Base, BaseFieldsMixin):
     message_dispatch_bid: Mapped[str] = mapped_column(
         String(32), unique=True, index=True, default=gen_bid, nullable=False
     )
-    message_definition_id: Mapped[int] = mapped_column(
-        ForeignKey("message_definitions.id", ondelete="RESTRICT"), nullable=False
-    )
-    notification_api_id: Mapped[int] = mapped_column(
-        ForeignKey("notification_apis.id", ondelete="RESTRICT"), nullable=False
-    )
+    message_definition_bid: Mapped[str] = mapped_column(String(32), index=True, nullable=False)
+    notification_api_bid: Mapped[str] = mapped_column(String(32), index=True, nullable=False)
     mapping: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     enabled: Mapped[bool] = mapped_column(Boolean, server_default="1", nullable=False)
 
-    message_definition: Mapped[MessageDefinition] = relationship(back_populates="dispatches")
-    notification_api: Mapped[NotificationAPI] = relationship(back_populates="dispatches")
+    message_definition: Mapped[MessageDefinition] = relationship(back_populates="dispatches", viewonly=True, primaryjoin="foreign(MessageDispatch.message_definition_bid)==MessageDefinition.message_definition_bid")
+    notification_api: Mapped[NotificationAPI] = relationship(back_populates="dispatches", viewonly=True, primaryjoin="foreign(MessageDispatch.notification_api_bid)==NotificationAPI.notification_api_bid")
 
 
 class SendRecord(Base, BaseFieldsMixin):
@@ -137,19 +129,13 @@ class SendRecord(Base, BaseFieldsMixin):
     send_record_bid: Mapped[str] = mapped_column(
         String(32), unique=True, index=True, default=gen_bid, nullable=False
     )
-    message_definition_id: Mapped[int] = mapped_column(
-        ForeignKey("message_definitions.id", ondelete="RESTRICT"), nullable=False
-    )
-    notification_api_id: Mapped[int] = mapped_column(
-        ForeignKey("notification_apis.id", ondelete="RESTRICT"), nullable=False
-    )
+    message_definition_bid: Mapped[str] = mapped_column(String(32), index=True, nullable=False)
+    notification_api_bid: Mapped[str] = mapped_column(String(32), index=True, nullable=False)
     send_time: Mapped[DateTime | None] = mapped_column(DateTime, nullable=True)
     result: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     remark: Mapped[str | None] = mapped_column(Text, nullable=True)
 
-    details: Mapped[list["SendDetail"]] = relationship(
-        back_populates="send_record", cascade="all, delete-orphan"
-    )
+    details: Mapped[list["SendDetail"]] = relationship(back_populates="send_record", viewonly=True, primaryjoin="foreign(SendDetail.send_record_bid)==SendRecord.send_record_bid")
 
 
 class SendDetail(Base, BaseFieldsMixin):
@@ -158,19 +144,15 @@ class SendDetail(Base, BaseFieldsMixin):
     send_detail_bid: Mapped[str] = mapped_column(
         String(32), unique=True, index=True, default=gen_bid, nullable=False
     )
-    send_record_id: Mapped[int] = mapped_column(
-        ForeignKey("send_records.id", ondelete="CASCADE"), nullable=False
-    )
-    notification_api_id: Mapped[int] = mapped_column(
-        ForeignKey("notification_apis.id", ondelete="RESTRICT"), nullable=False
-    )
+    send_record_bid: Mapped[str] = mapped_column(String(32), index=True, nullable=False)
+    notification_api_bid: Mapped[str] = mapped_column(String(32), index=True, nullable=False)
     attempt_no: Mapped[int] = mapped_column(Integer, server_default="1", nullable=False)
     request_payload: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     response_payload: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     sent_at: Mapped[DateTime | None] = mapped_column(DateTime, nullable=True)
     error: Mapped[str | None] = mapped_column(Text, nullable=True)
 
-    send_record: Mapped[SendRecord] = relationship(back_populates="details")
+    send_record: Mapped[SendRecord] = relationship(back_populates="details", viewonly=True, primaryjoin="foreign(SendDetail.send_record_bid)==SendRecord.send_record_bid")
 
 
 class User(Base, BaseFieldsMixin):

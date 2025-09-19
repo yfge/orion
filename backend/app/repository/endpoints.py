@@ -38,12 +38,8 @@ def create_endpoint(
     auth_profile_bid: str | None,
     status: int | None = 0,
 ) -> NotificationAPI:
-    system_id = _get_system_id_by_bid(db, system_bid)
-    if system_id is None:
-        raise ValueError("business system not found")
-    auth_profile_id = _get_auth_profile_id_by_bid(db, auth_profile_bid)
     obj = NotificationAPI(
-        business_system_id=system_id,
+        business_system_bid=system_bid,
         name=name,
         endpoint_url=endpoint_url or "",
         request_schema=None,
@@ -51,7 +47,7 @@ def create_endpoint(
         transport=transport,
         adapter_key=adapter_key,
         config=config,
-        auth_profile_id=auth_profile_id,
+        auth_profile_bid=auth_profile_bid,
         status=status or 0,
     )
     db.add(obj)
@@ -63,67 +59,33 @@ def list_endpoints(db: Session, *, system_bid: str, limit: int = 50, offset: int
     system_id = _get_system_id_by_bid(db, system_bid)
     if system_id is None:
         return [], 0
-    base = select(NotificationAPI).where(
-        NotificationAPI.business_system_id == system_id,
-        NotificationAPI.is_deleted == False,  # noqa: E712
-    )
-    count_q = select(func.count()).select_from(NotificationAPI).where(
-        NotificationAPI.business_system_id == system_id,
-        NotificationAPI.is_deleted == False,  # noqa: E712
-    )
+    base = select(NotificationAPI).where(NotificationAPI.business_system_bid == system_bid, NotificationAPI.is_deleted == False)  # noqa: E712
+    count_q = select(func.count()).select_from(NotificationAPI).where(NotificationAPI.business_system_bid == system_bid, NotificationAPI.is_deleted == False)  # noqa: E712
     if q:
         like = f"%{q}%"
         base = base.where(NotificationAPI.name.ilike(like))
         count_q = count_q.where(NotificationAPI.name.ilike(like))
     items = list(db.execute(base.order_by(NotificationAPI.id.desc()).limit(limit).offset(offset)).scalars())
     # Attach business_system_bid and auth_profile_bid for each item (avoid extra queries via simple lookups)
-    bs_bid = db.execute(select(BusinessSystem.business_system_bid).where(BusinessSystem.id == system_id)).scalar_one()
-    ap_map = {}
     for it in items:
-        it.business_system_bid = bs_bid  # type: ignore[attr-defined]
-        if it.auth_profile_id:
-            if it.auth_profile_id not in ap_map:
-                ap_bid = db.execute(select(AuthProfile.auth_profile_bid).where(AuthProfile.id == it.auth_profile_id)).scalar_one_or_none()
-                ap_map[it.auth_profile_id] = ap_bid
-            it.auth_profile_bid = ap_map.get(it.auth_profile_id)  # type: ignore[attr-defined]
+        # already set in row
+        pass
     total = db.execute(count_q).scalar_one()
     return items, int(total)
 
 
 def get_by_bid(db: Session, bid: str) -> NotificationAPI | None:
-    stmt = (
-        select(NotificationAPI, BusinessSystem.business_system_bid, AuthProfile.auth_profile_bid)
-        .join(BusinessSystem, NotificationAPI.business_system_id == BusinessSystem.id)
-        .join(AuthProfile, NotificationAPI.auth_profile_id == AuthProfile.id, isouter=True)
-        .where(NotificationAPI.notification_api_bid == bid, NotificationAPI.is_deleted == False)  # noqa: E712
-    )
-    row = db.execute(stmt).first()
-    if not row:
-        return None
-    api: NotificationAPI = row[0]
-    api.business_system_bid = row[1]  # type: ignore[attr-defined]
-    api.auth_profile_bid = row[2]  # type: ignore[attr-defined]
-    return api
+    return db.execute(select(NotificationAPI).where(NotificationAPI.notification_api_bid == bid, NotificationAPI.is_deleted == False)).scalar_one_or_none()  # noqa: E712
 
 
 def list_all_endpoints(db: Session, *, limit: int = 50, offset: int = 0, q: str | None = None) -> Tuple[list[NotificationAPI], int]:
-    base = (
-        select(NotificationAPI, BusinessSystem.business_system_bid, AuthProfile.auth_profile_bid)
-        .join(BusinessSystem, NotificationAPI.business_system_id == BusinessSystem.id)
-        .join(AuthProfile, NotificationAPI.auth_profile_id == AuthProfile.id, isouter=True)
-        .where(NotificationAPI.is_deleted == False)
-    )
-    count_q = select(func.count()).select_from(NotificationAPI).where(NotificationAPI.is_deleted == False)
+    base = select(NotificationAPI).where(NotificationAPI.is_deleted == False)  # noqa: E712
+    count_q = select(func.count()).select_from(NotificationAPI).where(NotificationAPI.is_deleted == False)  # noqa: E712
     if q:
         like = f"%{q}%"
         base = base.where(NotificationAPI.name.ilike(like))
         count_q = count_q.where(NotificationAPI.name.ilike(like))
-    rows = db.execute(base.order_by(NotificationAPI.id.desc()).limit(limit).offset(offset)).all()
-    items: list[NotificationAPI] = []
-    for api, bs_bid, ap_bid in rows:
-        api.business_system_bid = bs_bid  # type: ignore[attr-defined]
-        api.auth_profile_bid = ap_bid  # type: ignore[attr-defined]
-        items.append(api)
+    items = list(db.execute(base.order_by(NotificationAPI.id.desc()).limit(limit).offset(offset)).scalars())
     total = db.execute(count_q).scalar_one()
     return items, int(total)
 

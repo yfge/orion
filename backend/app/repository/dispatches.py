@@ -17,27 +17,22 @@ def _get_endpoint_id_by_bid(db: Session, bid: str) -> int | None:
 
 
 def create_dispatch(db: Session, *, message_bid: str, endpoint_bid: str, mapping: dict | None, enabled: bool = True) -> MessageDispatch:
-    mid = _get_message_id_by_bid(db, message_bid)
-    if mid is None:
+    if db.execute(select(MessageDefinition).where(MessageDefinition.message_definition_bid == message_bid, MessageDefinition.is_deleted == False)).first() is None:  # noqa: E712
         raise ValueError("message definition not found")
-    eid = _get_endpoint_id_by_bid(db, endpoint_bid)
-    if eid is None:
+    if db.execute(select(NotificationAPI).where(NotificationAPI.notification_api_bid == endpoint_bid, NotificationAPI.is_deleted == False)).first() is None:  # noqa: E712
         raise ValueError("endpoint not found")
-    obj = MessageDispatch(message_definition_id=mid, notification_api_id=eid, mapping=mapping, enabled=enabled)
+    obj = MessageDispatch(message_definition_bid=message_bid, notification_api_bid=endpoint_bid, mapping=mapping, enabled=enabled)
     db.add(obj)
     db.flush()
     return obj
 
 
 def list_by_message(db: Session, *, message_bid: str, limit: int = 50, offset: int = 0) -> Tuple[list[MessageDispatch], int]:
-    mid = _get_message_id_by_bid(db, message_bid)
-    if mid is None:
-        return [], 0
     base = (
         select(MessageDispatch, NotificationAPI.name, NotificationAPI.notification_api_bid, BusinessSystem.business_system_bid)
-        .join(NotificationAPI, MessageDispatch.notification_api_id == NotificationAPI.id)
-        .join(BusinessSystem, NotificationAPI.business_system_id == BusinessSystem.id)
-        .where(MessageDispatch.message_definition_id == mid, MessageDispatch.is_deleted == False)
+        .join(NotificationAPI, MessageDispatch.notification_api_bid == NotificationAPI.notification_api_bid)
+        .join(BusinessSystem, NotificationAPI.business_system_bid == BusinessSystem.business_system_bid)
+        .where(MessageDispatch.message_definition_bid == message_bid, MessageDispatch.is_deleted == False)
     )
     items_rows = db.execute(base.order_by(MessageDispatch.id.desc()).limit(limit).offset(offset)).all()
     items = []
@@ -47,18 +42,15 @@ def list_by_message(db: Session, *, message_bid: str, limit: int = 50, offset: i
         md.business_system_bid = bs_bid  # type: ignore[attr-defined]
         md.message_definition_bid = message_bid  # type: ignore[attr-defined]
         items.append(md)
-    total = db.execute(select(func.count()).select_from(MessageDispatch).where(MessageDispatch.message_definition_id == mid, MessageDispatch.is_deleted == False)).scalar_one()  # noqa: E712
+    total = db.execute(select(func.count()).select_from(MessageDispatch).where(MessageDispatch.message_definition_bid == message_bid, MessageDispatch.is_deleted == False)).scalar_one()  # noqa: E712
     return items, int(total)
 
 
 def list_by_endpoint(db: Session, *, endpoint_bid: str, limit: int = 50, offset: int = 0) -> Tuple[list[MessageDispatch], int]:
-    eid = _get_endpoint_id_by_bid(db, endpoint_bid)
-    if eid is None:
-        return [], 0
     base = (
         select(MessageDispatch, MessageDefinition.name, MessageDefinition.message_definition_bid)
-        .join(MessageDefinition, MessageDispatch.message_definition_id == MessageDefinition.id)
-        .where(MessageDispatch.notification_api_id == eid, MessageDispatch.is_deleted == False)
+        .join(MessageDefinition, MessageDispatch.message_definition_bid == MessageDefinition.message_definition_bid)
+        .where(MessageDispatch.notification_api_bid == endpoint_bid, MessageDispatch.is_deleted == False)
     )
     rows = db.execute(base.order_by(MessageDispatch.id.desc()).limit(limit).offset(offset)).all()
     items = []
@@ -66,16 +58,16 @@ def list_by_endpoint(db: Session, *, endpoint_bid: str, limit: int = 50, offset:
         md.message_definition_name = msg_name  # type: ignore[attr-defined]
         md.message_definition_bid = msg_bid  # type: ignore[attr-defined]
         items.append(md)
-    total = db.execute(select(func.count()).select_from(MessageDispatch).where(MessageDispatch.notification_api_id == eid, MessageDispatch.is_deleted == False)).scalar_one()  # noqa: E712
+    total = db.execute(select(func.count()).select_from(MessageDispatch).where(MessageDispatch.notification_api_bid == endpoint_bid, MessageDispatch.is_deleted == False)).scalar_one()  # noqa: E712
     return items, int(total)
 
 
 def get_by_bid(db: Session, bid: str) -> MessageDispatch | None:
     row = db.execute(
         select(MessageDispatch, NotificationAPI.notification_api_bid, NotificationAPI.name, BusinessSystem.business_system_bid, MessageDefinition.message_definition_bid)
-        .join(NotificationAPI, MessageDispatch.notification_api_id == NotificationAPI.id)
-        .join(BusinessSystem, NotificationAPI.business_system_id == BusinessSystem.id)
-        .join(MessageDefinition, MessageDispatch.message_definition_id == MessageDefinition.id)
+        .join(NotificationAPI, MessageDispatch.notification_api_bid == NotificationAPI.notification_api_bid)
+        .join(BusinessSystem, NotificationAPI.business_system_bid == BusinessSystem.business_system_bid)
+        .join(MessageDefinition, MessageDispatch.message_definition_bid == MessageDefinition.message_definition_bid)
         .where(MessageDispatch.message_dispatch_bid == bid, MessageDispatch.is_deleted == False)
     ).first()
     if not row:
@@ -93,10 +85,10 @@ def update_by_bid(db: Session, bid: str, *, endpoint_bid: str | None = None, map
     if not obj:
         return None
     if endpoint_bid is not None:
-        eid = _get_endpoint_id_by_bid(db, endpoint_bid)
-        if eid is None:
+        # ensure endpoint exists
+        if db.execute(select(NotificationAPI).where(NotificationAPI.notification_api_bid == endpoint_bid, NotificationAPI.is_deleted == False)).first() is None:  # noqa: E712
             raise ValueError("endpoint not found")
-        obj.notification_api_id = eid
+        obj.notification_api_bid = endpoint_bid
     if mapping is not None:
         obj.mapping = mapping
     if enabled is not None:

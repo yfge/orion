@@ -31,7 +31,7 @@ def notify(payload: NotifyRequest, db: Session = Depends(get_db)):
             results = notify_by_name(db, message_name=payload.message_name, data=payload.data)
         else:
             raise HTTPException(status_code=400, detail="message_name or message_definition_bid is required")
+        db.commit()
         return {"results": results}
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
-
