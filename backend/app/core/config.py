@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     SECRET_KEY: str | None = None
 
     # CORS (supports '*', comma-separated, or JSON array via env); if empty, use sensible dev defaults in app
-    CORS_ORIGINS: list[str] = []
+    CORS_ORIGINS: list[str] | str | None = []
 
     @field_validator("CORS_ORIGINS", mode="before")
     @classmethod
