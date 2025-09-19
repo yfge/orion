@@ -7,7 +7,7 @@ from ...schemas.endpoints import EndpointCreate, EndpointList, EndpointOut, Endp
 from ...services.sender.http_sender import HttpSender
 from ...repository import endpoints as repo
 from ...repository import dispatches as dispatch_repo
-from ...schemas.dispatches import DispatchCreate, DispatchList, DispatchOut, DispatchUpdate
+from ...schemas.dispatches import DispatchCreate, DispatchList, DispatchOut, DispatchUpdate, EndpointDispatchCreate
 
 
 router = APIRouter(tags=["endpoints"])
@@ -262,3 +262,43 @@ def delete_dispatch(dispatch_bid: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Dispatch not found")
     db.commit()
     return None
+
+
+@router.get("/endpoints/{endpoint_bid}/dispatches", response_model=DispatchList)
+def list_dispatches_by_endpoint(endpoint_bid: str, db: Session = Depends(get_db), limit: int = Query(100, ge=1, le=500), offset: int = Query(0, ge=0)):
+    items, total = dispatch_repo.list_by_endpoint(db, endpoint_bid=endpoint_bid, limit=limit, offset=offset)
+    shaped = [
+        {
+            "message_dispatch_bid": it.message_dispatch_bid,
+            "message_definition_bid": getattr(it, "message_definition_bid", None),
+            "endpoint_bid": endpoint_bid,
+            "endpoint_name": None,
+            "business_system_bid": None,
+            "mapping": it.mapping,
+            "enabled": it.enabled,
+            "status": it.status,
+        }
+        for it in items
+    ]
+    return {"items": shaped, "total": total, "limit": limit, "offset": offset}
+
+
+@router.post("/endpoints/{endpoint_bid}/dispatches", response_model=DispatchOut, status_code=status.HTTP_201_CREATED)
+def create_dispatch_for_endpoint(endpoint_bid: str, payload: EndpointDispatchCreate, db: Session = Depends(get_db)):
+    try:
+        obj = dispatch_repo.create_dispatch(db, message_bid=payload.message_definition_bid, endpoint_bid=endpoint_bid, mapping=payload.mapping, enabled=payload.enabled)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    db.commit()
+    db.refresh(obj)
+    shaped = dispatch_repo.get_by_bid(db, obj.message_dispatch_bid)
+    return {
+        "message_dispatch_bid": obj.message_dispatch_bid,
+        "message_definition_bid": payload.message_definition_bid,
+        "endpoint_bid": endpoint_bid,
+        "endpoint_name": getattr(shaped, "endpoint_name", None) if shaped else None,
+        "business_system_bid": getattr(shaped, "business_system_bid", None) if shaped else None,
+        "mapping": obj.mapping,
+        "enabled": obj.enabled,
+        "status": obj.status,
+    }

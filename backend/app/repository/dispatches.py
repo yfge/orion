@@ -51,6 +51,25 @@ def list_by_message(db: Session, *, message_bid: str, limit: int = 50, offset: i
     return items, int(total)
 
 
+def list_by_endpoint(db: Session, *, endpoint_bid: str, limit: int = 50, offset: int = 0) -> Tuple[list[MessageDispatch], int]:
+    eid = _get_endpoint_id_by_bid(db, endpoint_bid)
+    if eid is None:
+        return [], 0
+    base = (
+        select(MessageDispatch, MessageDefinition.name, MessageDefinition.message_definition_bid)
+        .join(MessageDefinition, MessageDispatch.message_definition_id == MessageDefinition.id)
+        .where(MessageDispatch.notification_api_id == eid, MessageDispatch.is_deleted == False)
+    )
+    rows = db.execute(base.order_by(MessageDispatch.id.desc()).limit(limit).offset(offset)).all()
+    items = []
+    for md, msg_name, msg_bid in rows:
+        md.message_definition_name = msg_name  # type: ignore[attr-defined]
+        md.message_definition_bid = msg_bid  # type: ignore[attr-defined]
+        items.append(md)
+    total = db.execute(select(func.count()).select_from(MessageDispatch).where(MessageDispatch.notification_api_id == eid, MessageDispatch.is_deleted == False)).scalar_one()  # noqa: E712
+    return items, int(total)
+
+
 def get_by_bid(db: Session, bid: str) -> MessageDispatch | None:
     row = db.execute(
         select(MessageDispatch, NotificationAPI.notification_api_bid, NotificationAPI.name, BusinessSystem.business_system_bid, MessageDefinition.message_definition_bid)
@@ -93,4 +112,3 @@ def soft_delete_by_bid(db: Session, bid: str) -> bool:
     obj.is_deleted = True
     db.flush()
     return True
-

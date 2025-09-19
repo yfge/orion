@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { getEndpoint, updateEndpoint, deleteEndpoint, listAuthProfiles, sendTestToEndpoint } from "@/lib/api"
+import { getEndpoint, updateEndpoint, deleteEndpoint, listAuthProfiles, sendTestToEndpoint, listDispatchesByEndpoint, listMessageDefs, createDispatchForEndpoint, deleteDispatch } from "@/lib/api"
 
 export default function EditEndpointPage() {
   const params = useParams<{ bid: string; endpointBid: string }>()
@@ -25,6 +25,11 @@ export default function EditEndpointPage() {
   const [authProfileBid, setAuthProfileBid] = useState("")
   const [testText, setTestText] = useState("")
   const [testResult, setTestResult] = useState<string | null>(null)
+  const [messageDefs, setMessageDefs] = useState<any[]>([])
+  const [endpointDispatches, setEndpointDispatches] = useState<any[]>([])
+  const [newMsgBid, setNewMsgBid] = useState("")
+  const [newMappingText, setNewMappingText] = useState("{}")
+  const [newEnabled, setNewEnabled] = useState(true)
 
   useEffect(() => {
     const load = async () => {
@@ -47,6 +52,18 @@ export default function EditEndpointPage() {
       try {
         const res = await listAuthProfiles({ limit: 100, offset: 0 })
         setAuthProfiles(res.items || [])
+      } catch {}
+    })()
+    ;(async () => {
+      try {
+        const msgs = await listMessageDefs({ limit: 500, offset: 0 })
+        setMessageDefs(msgs.items || [])
+      } catch {}
+    })()
+    ;(async () => {
+      try {
+        const dps = await listDispatchesByEndpoint(endpointBid)
+        setEndpointDispatches(dps.items || [])
       } catch {}
     })()
   }, [endpointBid])
@@ -93,6 +110,20 @@ export default function EditEndpointPage() {
     }
   }
 
+  const onAddDispatch = async () => {
+    try {
+      const mapping = newMappingText ? JSON.parse(newMappingText) : null
+      await createDispatchForEndpoint(endpointBid, { message_definition_bid: newMsgBid, mapping, enabled: newEnabled })
+      const dps = await listDispatchesByEndpoint(endpointBid)
+      setEndpointDispatches(dps.items || [])
+      setNewMsgBid("")
+      setNewMappingText("{}")
+      setNewEnabled(true)
+    } catch (e: any) {
+      alert(e.message || "新增映射失败")
+    }
+  }
+
   if (loading && !name) return <div className="container">加载中...</div>
 
   return (
@@ -135,6 +166,64 @@ export default function EditEndpointPage() {
         <div className="space-y-1">
           <Label htmlFor="config">配置 JSON</Label>
           <Textarea id="config" value={configText} onChange={(e) => setConfigText(e.target.value)} className="font-mono" />
+        </div>
+        <div className="space-y-3">
+          <h2 className="text-lg font-medium">派发映射（Endpoint ← Message）</h2>
+          <div className="rounded-lg border p-3 space-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <Label htmlFor="msg">选择消息定义</Label>
+                <select id="msg" className="border rounded-md h-9 px-3 text-sm w-full" value={newMsgBid} onChange={(e) => setNewMsgBid(e.target.value)}>
+                  <option value="">选择消息定义</option>
+                  {messageDefs.map((m) => (
+                    <option key={m.message_definition_bid} value={m.message_definition_bid}>{m.name} ({m.type || 'custom'})</option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="enabled2">启用</Label>
+                <select id="enabled2" className="border rounded-md h-9 px-3 text-sm w-full" value={newEnabled ? '1' : '0'} onChange={(e) => setNewEnabled(e.target.value === '1')}>
+                  <option value="1">是</option>
+                  <option value="0">否</option>
+                </select>
+              </div>
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="mapping2">Mapping JSON（可选）</Label>
+              <Textarea id="mapping2" className="font-mono" value={newMappingText} onChange={(e) => setNewMappingText(e.target.value)} />
+            </div>
+            <div>
+              <Button type="button" onClick={onAddDispatch} disabled={!newMsgBid}>新增映射</Button>
+            </div>
+          </div>
+
+          <div className="overflow-x-auto rounded-lg border">
+            <table className="min-w-full text-sm">
+              <thead className="bg-muted/50">
+                <tr>
+                  <th className="px-3 py-2 text-left">消息定义</th>
+                  <th className="px-3 py-2 text-left">启用</th>
+                  <th className="px-3 py-2 text-left">操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                {endpointDispatches.map((d) => (
+                  <tr key={d.message_dispatch_bid} className="border-t">
+                    <td className="px-3 py-2">{d.message_definition_bid}</td>
+                    <td className="px-3 py-2">{d.enabled ? '是' : '否'}</td>
+                    <td className="px-3 py-2">
+                      <button onClick={async () => { await deleteDispatch(d.message_dispatch_bid); const dd = await listDispatchesByEndpoint(endpointBid); setEndpointDispatches(dd.items || []) }} className="text-red-600 hover:underline">删除</button>
+                    </td>
+                  </tr>
+                ))}
+                {endpointDispatches.length === 0 && (
+                  <tr>
+                    <td className="px-3 py-4 text-muted-foreground" colSpan={3}>暂无映射</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
         <div className="space-y-1">
           <Label htmlFor="test">测试发送（Feishu）</Label>

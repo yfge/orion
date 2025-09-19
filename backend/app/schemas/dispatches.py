@@ -37,3 +37,8 @@ class DispatchList(BaseModel):
     limit: int
     offset: int
 
+
+class EndpointDispatchCreate(BaseModel):
+    message_definition_bid: str = Field(min_length=1, max_length=64)
+    mapping: dict | None = None
+    enabled: bool = True

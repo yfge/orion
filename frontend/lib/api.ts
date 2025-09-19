@@ -186,3 +186,11 @@ export async function updateDispatch(dispatchBid: string, payload: Partial<{ end
 export async function deleteDispatch(dispatchBid: string) {
   return apiFetch(`/api/v1/dispatches/${dispatchBid}`, { method: "DELETE" })
 }
+
+export async function listDispatchesByEndpoint(endpointBid: string) {
+  return apiFetch(`/api/v1/endpoints/${endpointBid}/dispatches`)
+}
+
+export async function createDispatchForEndpoint(endpointBid: string, payload: { message_definition_bid: string; mapping?: any; enabled?: boolean }) {
+  return apiFetch(`/api/v1/endpoints/${endpointBid}/dispatches`, { method: "POST", body: JSON.stringify(payload) })
+}
