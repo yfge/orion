@@ -66,6 +66,12 @@ class NotificationAPI(Base, BaseFieldsMixin):
     request_schema: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     response_schema: Mapped[dict | None] = mapped_column(JSON, nullable=True)
 
+    # Extensibility: transport + adapter + config + optional auth profile
+    transport: Mapped[str | None] = mapped_column(String(16), nullable=True)  # e.g., http, mq
+    adapter_key: Mapped[str | None] = mapped_column(String(64), nullable=True)  # e.g., http.generic, mq.kafka
+    config: Mapped[dict | None] = mapped_column(JSON, nullable=True)  # adapter-specific
+    auth_profile_id: Mapped[int | None] = mapped_column(nullable=True)  # FK added in later migration
+
     business_system: Mapped[BusinessSystem] = relationship(back_populates="apis")
     dispatches: Mapped[list["MessageDispatch"]] = relationship(
         back_populates="notification_api", cascade="all, delete-orphan"
