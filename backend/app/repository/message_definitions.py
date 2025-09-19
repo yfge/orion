@@ -29,6 +29,10 @@ def get_by_bid(db: Session, bid: str) -> MessageDefinition | None:
     return db.execute(select(MessageDefinition).where(MessageDefinition.message_definition_bid == bid, MessageDefinition.is_deleted == False)).scalar_one_or_none()  # noqa: E712
 
 
+def get_by_name(db: Session, name: str) -> MessageDefinition | None:
+    return db.execute(select(MessageDefinition).where(MessageDefinition.name == name, MessageDefinition.is_deleted == False)).scalar_one_or_none()  # noqa: E712
+
+
 def update_by_bid(db: Session, bid: str, *, name: str | None = None, type: str | None = None, schema: dict | None = None, status: int | None = None) -> MessageDefinition | None:
     obj = get_by_bid(db, bid)
     if not obj:
@@ -52,4 +56,3 @@ def soft_delete_by_bid(db: Session, bid: str) -> bool:
     obj.is_deleted = True
     db.flush()
     return True
-
