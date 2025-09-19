@@ -134,3 +134,29 @@ export async function sendTestToEndpoint(endpointBid: string, text: string) {
     body: JSON.stringify({ text }),
   })
 }
+
+// Message definitions
+export async function listMessageDefs(params?: { limit?: number; offset?: number; q?: string }) {
+  const qs = new URLSearchParams()
+  if (params?.limit) qs.set("limit", String(params.limit))
+  if (params?.offset) qs.set("offset", String(params.offset))
+  if (params?.q) qs.set("q", params.q)
+  const suffix = qs.toString() ? `?${qs.toString()}` : ""
+  return apiFetch(`/api/v1/message-definitions/${suffix}`)
+}
+
+export async function createMessageDef(payload: { name: string; type?: string | null; schema?: any; status?: number | null }) {
+  return apiFetch(`/api/v1/message-definitions/`, { method: "POST", body: JSON.stringify(payload) })
+}
+
+export async function getMessageDef(bid: string) {
+  return apiFetch(`/api/v1/message-definitions/${bid}`)
+}
+
+export async function updateMessageDef(bid: string, payload: Partial<{ name: string; type: string | null; schema: any; status: number | null }>) {
+  return apiFetch(`/api/v1/message-definitions/${bid}`, { method: "PATCH", body: JSON.stringify(payload) })
+}
+
+export async function deleteMessageDef(bid: string) {
+  return apiFetch(`/api/v1/message-definitions/${bid}`, { method: "DELETE" })
+}
