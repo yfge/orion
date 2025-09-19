@@ -12,6 +12,8 @@ if BASE_DIR not in sys.path:
 
 from backend.app.core.config import settings  # noqa: E402
 from backend.app.db.base import Base  # noqa: E402
+# Ensure models are imported so metadata is populated for autogenerate
+from backend.app.db import models as _models  # noqa: F401,E402
 
 
 # this is the Alembic Config object, which provides
@@ -59,4 +61,3 @@ if context.is_offline_mode():
     run_migrations_offline()
 else:
     run_migrations_online()
-
