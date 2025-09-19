@@ -1,4 +1,6 @@
 from unittest.mock import patch
+from sqlalchemy.orm import sessionmaker
+from backend.app.db.models import SendRecord, SendDetail
 
 
 def setup_system_endpoint_and_message(client):
@@ -29,7 +31,7 @@ def setup_system_endpoint_and_message(client):
     return msg_bid
 
 
-def test_notify_by_name(client, monkeypatch):
+def test_notify_by_name(client, engine, monkeypatch):
     msg_bid = setup_system_endpoint_and_message(client)
 
     class DummySender:
@@ -43,4 +45,8 @@ def test_notify_by_name(client, monkeypatch):
         res = r.json()["results"]
         assert len(res) == 1
         assert res[0]["status_code"] == 200
-
+        # verify records persisted
+        Session = sessionmaker(bind=engine, future=True)
+        with Session() as s:
+            assert s.query(SendRecord).count() == 1
+            assert s.query(SendDetail).count() == 1
