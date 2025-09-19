@@ -32,6 +32,9 @@ redis = ["redis>=5.0.0"]
 celery = ["celery>=5.3.0"]
 rq = ["rq>=1.16.0"]
 apscheduler = ["APScheduler>=3.10.0"]
+test = [
+  "pytest>=8.3",
+]
 
 [tool.setuptools.packages.find]
 where = ["."]
@@ -55,3 +58,7 @@ select = [
 ]
 ignore = []
 fix = true
+
+[tool.pytest.ini_options]
+testpaths = ["backend/tests"]
+addopts = "-q"
