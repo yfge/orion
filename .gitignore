@@ -45,3 +45,4 @@ Docker/.tmp/
 # Misc
 *.log
 **/.cache/
+orion.db
