@@ -18,7 +18,7 @@ def create_message_def(payload: MessageDefCreate, db: Session = Depends(get_db))
 
 
 @router.get("/", response_model=MessageDefList)
-def list_message_defs(db: Session = Depends(get_db), limit: int = Query(50, ge=1, le=200), offset: int = Query(0, ge=0), q: str | None = Query(default=None)):
+def list_message_defs(db: Session = Depends(get_db), limit: int = Query(50, ge=1, le=1000), offset: int = Query(0, ge=0), q: str | None = Query(default=None)):
     items, total = repo.list_message_defs(db, limit=limit, offset=offset, q=q)
     return {"items": items, "total": total, "limit": limit, "offset": offset}
 
@@ -48,4 +48,3 @@ def delete_message_def(bid: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Message definition not found")
     db.commit()
     return None
-
