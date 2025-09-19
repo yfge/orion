@@ -106,6 +106,28 @@ def get_by_bid(db: Session, bid: str) -> NotificationAPI | None:
     return api
 
 
+def list_all_endpoints(db: Session, *, limit: int = 50, offset: int = 0, q: str | None = None) -> Tuple[list[NotificationAPI], int]:
+    base = (
+        select(NotificationAPI, BusinessSystem.business_system_bid, AuthProfile.auth_profile_bid)
+        .join(BusinessSystem, NotificationAPI.business_system_id == BusinessSystem.id)
+        .join(AuthProfile, NotificationAPI.auth_profile_id == AuthProfile.id, isouter=True)
+        .where(NotificationAPI.is_deleted == False)
+    )
+    count_q = select(func.count()).select_from(NotificationAPI).where(NotificationAPI.is_deleted == False)
+    if q:
+        like = f"%{q}%"
+        base = base.where(NotificationAPI.name.ilike(like))
+        count_q = count_q.where(NotificationAPI.name.ilike(like))
+    rows = db.execute(base.order_by(NotificationAPI.id.desc()).limit(limit).offset(offset)).all()
+    items: list[NotificationAPI] = []
+    for api, bs_bid, ap_bid in rows:
+        api.business_system_bid = bs_bid  # type: ignore[attr-defined]
+        api.auth_profile_bid = ap_bid  # type: ignore[attr-defined]
+        items.append(api)
+    total = db.execute(count_q).scalar_one()
+    return items, int(total)
+
+
 def update_by_bid(
     db: Session,
     bid: str,

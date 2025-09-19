@@ -160,3 +160,29 @@ export async function updateMessageDef(bid: string, payload: Partial<{ name: str
 export async function deleteMessageDef(bid: string) {
   return apiFetch(`/api/v1/message-definitions/${bid}`, { method: "DELETE" })
 }
+
+// Dispatches
+export async function listAllEndpoints(params?: { limit?: number; offset?: number; q?: string }) {
+  const qs = new URLSearchParams()
+  if (params?.limit) qs.set("limit", String(params.limit))
+  if (params?.offset) qs.set("offset", String(params.offset))
+  if (params?.q) qs.set("q", params.q)
+  const suffix = qs.toString() ? `?${qs.toString()}` : ""
+  return apiFetch(`/api/v1/endpoints${suffix}`)
+}
+
+export async function listDispatches(messageBid: string) {
+  return apiFetch(`/api/v1/message-definitions/${messageBid}/dispatches`)
+}
+
+export async function createDispatch(messageBid: string, payload: { endpoint_bid: string; mapping?: any; enabled?: boolean }) {
+  return apiFetch(`/api/v1/message-definitions/${messageBid}/dispatches`, { method: "POST", body: JSON.stringify(payload) })
+}
+
+export async function updateDispatch(dispatchBid: string, payload: Partial<{ endpoint_bid: string; mapping: any; enabled: boolean }>) {
+  return apiFetch(`/api/v1/dispatches/${dispatchBid}`, { method: "PATCH", body: JSON.stringify(payload) })
+}
+
+export async function deleteDispatch(dispatchBid: string) {
+  return apiFetch(`/api/v1/dispatches/${dispatchBid}`, { method: "DELETE" })
+}

@@ -5,6 +5,9 @@ from ...deps.db import get_db
 from ...repository import endpoints as repo
 from ...schemas.endpoints import EndpointCreate, EndpointList, EndpointOut, EndpointUpdate, SendTestRequest, SendTestResponse
 from ...services.sender.http_sender import HttpSender
+from ...repository import endpoints as repo
+from ...repository import dispatches as dispatch_repo
+from ...schemas.dispatches import DispatchCreate, DispatchList, DispatchOut, DispatchUpdate
 
 
 router = APIRouter(tags=["endpoints"])
@@ -148,3 +151,114 @@ def send_test(endpoint_bid: str, payload: SendTestRequest, db: Session = Depends
         return SendTestResponse(status_code=int(result.get("status_code", 0)), body=result.get("body"))
     except Exception as e:  # pragma: no cover
         raise HTTPException(status_code=502, detail=f"Send failed: {e}")
+
+
+# Optionally list all endpoints (across systems)
+@router.get("/endpoints", response_model=EndpointList)
+def list_all_endpoints(db: Session = Depends(get_db), limit: int = Query(50, ge=1, le=200), offset: int = Query(0, ge=0), q: str | None = Query(default=None)):
+    items, total = repo.list_all_endpoints(db, limit=limit, offset=offset, q=q)
+    shaped = [
+        {
+            "notification_api_bid": it.notification_api_bid,
+            "business_system_bid": getattr(it, "business_system_bid", None),
+            "name": it.name,
+            "transport": it.transport,
+            "adapter_key": it.adapter_key,
+            "endpoint_url": it.endpoint_url,
+            "config": it.config,
+            "auth_profile_bid": getattr(it, "auth_profile_bid", None),
+            "status": it.status,
+        }
+        for it in items
+    ]
+    return {"items": shaped, "total": total, "limit": limit, "offset": offset}
+
+
+# Dispatches (message -> endpoint)
+@router.post("/message-definitions/{message_bid}/dispatches", response_model=DispatchOut, status_code=status.HTTP_201_CREATED)
+def create_dispatch(message_bid: str, payload: DispatchCreate, db: Session = Depends(get_db)):
+    try:
+        obj = dispatch_repo.create_dispatch(db, message_bid=message_bid, endpoint_bid=payload.endpoint_bid, mapping=payload.mapping, enabled=payload.enabled)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    db.commit()
+    db.refresh(obj)
+    shaped = dispatch_repo.get_by_bid(db, obj.message_dispatch_bid)
+    return {
+        "message_dispatch_bid": obj.message_dispatch_bid,
+        "message_definition_bid": message_bid,
+        "endpoint_bid": getattr(shaped, "endpoint_bid", payload.endpoint_bid) if shaped else payload.endpoint_bid,
+        "endpoint_name": getattr(shaped, "endpoint_name", None) if shaped else None,
+        "business_system_bid": getattr(shaped, "business_system_bid", None) if shaped else None,
+        "mapping": obj.mapping,
+        "enabled": obj.enabled,
+        "status": obj.status,
+    }
+
+
+@router.get("/message-definitions/{message_bid}/dispatches", response_model=DispatchList)
+def list_dispatches(message_bid: str, db: Session = Depends(get_db), limit: int = Query(100, ge=1, le=500), offset: int = Query(0, ge=0)):
+    items, total = dispatch_repo.list_by_message(db, message_bid=message_bid, limit=limit, offset=offset)
+    shaped = [
+        {
+            "message_dispatch_bid": it.message_dispatch_bid,
+            "message_definition_bid": message_bid,
+            "endpoint_bid": getattr(it, "endpoint_bid", None),
+            "endpoint_name": getattr(it, "endpoint_name", None),
+            "business_system_bid": getattr(it, "business_system_bid", None),
+            "mapping": it.mapping,
+            "enabled": it.enabled,
+            "status": it.status,
+        }
+        for it in items
+    ]
+    return {"items": shaped, "total": total, "limit": limit, "offset": offset}
+
+
+@router.get("/dispatches/{dispatch_bid}", response_model=DispatchOut)
+def get_dispatch(dispatch_bid: str, db: Session = Depends(get_db)):
+    obj = dispatch_repo.get_by_bid(db, dispatch_bid)
+    if not obj:
+        raise HTTPException(status_code=404, detail="Dispatch not found")
+    return {
+        "message_dispatch_bid": obj.message_dispatch_bid,
+        "message_definition_bid": getattr(obj, "message_definition_bid", ""),
+        "endpoint_bid": getattr(obj, "endpoint_bid", ""),
+        "endpoint_name": getattr(obj, "endpoint_name", None),
+        "business_system_bid": getattr(obj, "business_system_bid", None),
+        "mapping": obj.mapping,
+        "enabled": obj.enabled,
+        "status": obj.status,
+    }
+
+
+@router.patch("/dispatches/{dispatch_bid}", response_model=DispatchOut)
+def update_dispatch(dispatch_bid: str, payload: DispatchUpdate, db: Session = Depends(get_db)):
+    try:
+        obj = dispatch_repo.update_by_bid(db, dispatch_bid, endpoint_bid=payload.endpoint_bid, mapping=payload.mapping, enabled=payload.enabled)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    if not obj:
+        raise HTTPException(status_code=404, detail="Dispatch not found")
+    db.commit()
+    db.refresh(obj)
+    shaped = dispatch_repo.get_by_bid(db, dispatch_bid)
+    return {
+        "message_dispatch_bid": obj.message_dispatch_bid,
+        "message_definition_bid": getattr(shaped, "message_definition_bid", "") if shaped else "",
+        "endpoint_bid": getattr(shaped, "endpoint_bid", "") if shaped else (payload.endpoint_bid or ""),
+        "endpoint_name": getattr(shaped, "endpoint_name", None) if shaped else None,
+        "business_system_bid": getattr(shaped, "business_system_bid", None) if shaped else None,
+        "mapping": obj.mapping,
+        "enabled": obj.enabled,
+        "status": obj.status,
+    }
+
+
+@router.delete("/dispatches/{dispatch_bid}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_dispatch(dispatch_bid: str, db: Session = Depends(get_db)):
+    ok = dispatch_repo.soft_delete_by_bid(db, dispatch_bid)
+    if not ok:
+        raise HTTPException(status_code=404, detail="Dispatch not found")
+    db.commit()
+    return None
