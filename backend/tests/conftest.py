@@ -8,6 +8,8 @@ from sqlalchemy.pool import StaticPool
 
 from backend.app.main import create_app
 from backend.app.db.base import Base
+# Ensure models are imported so metadata is populated
+from backend.app.db import models as _models  # noqa: F401
 from backend.app.deps.db import get_db
 
 
@@ -50,4 +52,3 @@ def app(db_session):
 @pytest.fixture()
 def client(app):
     return TestClient(app)
-
