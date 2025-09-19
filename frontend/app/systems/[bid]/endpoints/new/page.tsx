@@ -6,7 +6,9 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { createEndpoint, listAuthProfiles } from "@/lib/api"
+import { createEndpoint, listAuthProfiles, validateSchema } from "@/lib/api"
+import { JsonSchemaForm } from "@/components/jsonschema/Form"
+import { endpointConfigSchemaFor } from "@/lib/schemas"
 
 export default function NewEndpointPage() {
   const params = useParams<{ bid: string }>()
@@ -18,6 +20,8 @@ export default function NewEndpointPage() {
   const [adapterKey, setAdapterKey] = useState("")
   const [endpointUrl, setEndpointUrl] = useState("")
   const [configText, setConfigText] = useState("{\n  \"method\": \"POST\",\n  \"headers\": {\n    \"Content-Type\": \"application/json\"\n  }\n}")
+  const [configObj, setConfigObj] = useState<any>({})
+  const [validateResult, setValidateResult] = useState<string | null>(null)
   const [authProfiles, setAuthProfiles] = useState<any[]>([])
   const [authProfileBid, setAuthProfileBid] = useState("")
   const [error, setError] = useState<string | null>(null)
@@ -102,9 +106,22 @@ export default function NewEndpointPage() {
             ))}
           </select>
         </div>
+        <div className="space-y-2">
+          <Label>配置表单（基于 Adapter Schema）</Label>
+          <JsonSchemaForm schema={endpointConfigSchemaFor(adapterKey)} value={configObj} onChange={(v) => { setConfigObj(v); setConfigText(JSON.stringify(v, null, 2)) }} />
+          <div className="flex items-center gap-2">
+            <Button type="button" variant="outline" onClick={async () => {
+              try {
+                const res = await validateSchema({ schema: endpointConfigSchemaFor(adapterKey), data: configObj })
+                setValidateResult(res.valid ? "配置校验通过" : `校验失败: ${(res.errors||[]).map((e:any)=>e.message).join('; ')}`)
+              } catch (e:any) { setValidateResult(e.message || '校验异常') }
+            }}>校验配置</Button>
+            {validateResult && <p className="text-xs text-muted-foreground">{validateResult}</p>}
+          </div>
+        </div>
         <div className="space-y-1">
-          <Label htmlFor="config">配置 JSON</Label>
-          <Textarea id="config" value={configText} onChange={(e) => setConfigText(e.target.value)} className="font-mono" />
+          <Label htmlFor="config">配置 JSON（高级）</Label>
+          <Textarea id="config" value={configText} onChange={(e) => { setConfigText(e.target.value); try{ setConfigObj(JSON.parse(e.target.value||'{}')) }catch{} }} className="font-mono" />
         </div>
         {error && <p className="text-sm text-red-600">{error}</p>}
         <div className="flex gap-2">

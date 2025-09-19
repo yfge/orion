@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from typing import Any
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy.orm import Session
 
@@ -75,7 +75,7 @@ def _notify(db: Session, *, message: MessageDefinition, schema: dict[str, Any], 
                 result_body = body
             # Update record and add detail
             send_record.status = 1
-            send_record.send_time = datetime.utcnow()
+            send_record.send_time = datetime.now(timezone.utc)
             send_record.result = result_body
             detail = SendDetail(
                 send_record_bid=send_record.send_record_bid,
@@ -84,7 +84,7 @@ def _notify(db: Session, *, message: MessageDefinition, schema: dict[str, Any], 
                 request_payload=payload if isinstance(payload, dict) else {"raw": str(payload)},
                 response_payload=result_body,
                 status=1,
-                sent_at=datetime.utcnow(),
+                sent_at=datetime.now(timezone.utc),
                 error=None,
             )
             db.add(detail)
@@ -103,7 +103,7 @@ def _notify(db: Session, *, message: MessageDefinition, schema: dict[str, Any], 
                 request_payload=payload if isinstance(payload, dict) else {"raw": str(payload)},
                 response_payload=None,
                 status=-1,
-                sent_at=datetime.utcnow(),
+                sent_at=datetime.now(timezone.utc),
                 error=str(e),
             )
             db.add(detail)

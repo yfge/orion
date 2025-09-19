@@ -198,3 +198,27 @@ export async function createDispatchForEndpoint(endpointBid: string, payload: { 
 export async function validateSchema(payload: { schema: any; data: any }) {
   return apiFetch(`/api/v1/schema/validate`, { method: "POST", body: JSON.stringify(payload) })
 }
+
+// Send records
+export async function listSendRecords(params?: { limit?: number; offset?: number; message_definition_bid?: string; notification_api_bid?: string; status?: number }) {
+  const qs = new URLSearchParams()
+  if (params?.limit) qs.set("limit", String(params.limit))
+  if (params?.offset) qs.set("offset", String(params.offset))
+  if (params?.message_definition_bid) qs.set("message_definition_bid", params.message_definition_bid)
+  if (params?.notification_api_bid) qs.set("notification_api_bid", params.notification_api_bid)
+  if (typeof params?.status === "number") qs.set("status", String(params.status))
+  const suffix = qs.toString() ? `?${qs.toString()}` : ""
+  return apiFetch(`/api/v1/send-records/${suffix}`)
+}
+
+export async function getSendRecord(bid: string) {
+  return apiFetch(`/api/v1/send-records/${bid}`)
+}
+
+export async function listSendDetails(bid: string, params?: { limit?: number; offset?: number }) {
+  const qs = new URLSearchParams()
+  if (params?.limit) qs.set("limit", String(params.limit))
+  if (params?.offset) qs.set("offset", String(params.offset))
+  const suffix = qs.toString() ? `?${qs.toString()}` : ""
+  return apiFetch(`/api/v1/send-records/${bid}/details${suffix}`)
+}
