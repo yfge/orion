@@ -1,0 +1,12 @@
+{
+  "transport": "mq",
+  "adapter_key": "mq.kafka",
+  "config": {
+    "broker_type": "kafka",
+    "bootstrap_servers": ["127.0.0.1:9092"],
+    "topic": "orion-notify",
+    "acks": "all",
+    "serialization": "json"
+  }
+}
+

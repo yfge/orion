@@ -1,0 +1,10 @@
+{
+  "type": "hmac",
+  "config": {
+    "access_key": "key",
+    "secret_key": "secret",
+    "algo": "sha256",
+    "header_name": "X-Signature"
+  }
+}
+

@@ -1,0 +1,12 @@
+{
+  "type": "jwt",
+  "config": {
+    "iss": "orion",
+    "kid": "key-id",
+    "private_key": "-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n",
+    "algorithm": "RS256",
+    "ttl_seconds": 300,
+    "claims_template": {"sub": "orion-gateway"}
+  }
+}
+

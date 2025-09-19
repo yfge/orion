@@ -1,0 +1,11 @@
+{
+  "transport": "http",
+  "adapter_key": "http.feishu_bot",
+  "config": {
+    "url": "https://open.feishu.cn/open-apis/bot/v2/hook/your_webhook_token",
+    "method": "POST",
+    "headers": {"Content-Type": "application/json"},
+    "timeout": 10
+  }
+}
+
