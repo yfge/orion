@@ -78,6 +78,25 @@ class NotificationAPI(Base, BaseFieldsMixin):
     )
 
 
+class Secret(Base, BaseFieldsMixin):
+    __tablename__ = "secrets"
+
+    secret_bid: Mapped[str] = mapped_column(String(32), unique=True, index=True, default=gen_bid, nullable=False)
+    key: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
+    value: Mapped[str | None] = mapped_column(Text, nullable=True)
+    metadata_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+
+
+class AuthProfile(Base, BaseFieldsMixin):
+    __tablename__ = "auth_profiles"
+
+    auth_profile_bid: Mapped[str] = mapped_column(String(32), unique=True, index=True, default=gen_bid, nullable=False)
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    type: Mapped[str] = mapped_column(String(32))  # none|oauth2_client_credentials|hmac|jwt|custom
+    config: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+
+
+
 class MessageDefinition(Base, BaseFieldsMixin):
     __tablename__ = "message_definitions"
 
