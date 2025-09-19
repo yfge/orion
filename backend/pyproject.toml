@@ -61,4 +61,4 @@ fix = true
 
 [tool.pytest.ini_options]
 testpaths = ["backend/tests"]
-addopts = "-q"
+addopts = "-q -p no:pytest_asyncio"
