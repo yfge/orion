@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
-import jwt
 
 from ...deps.db import get_db
 from ...repository.users import list_users
@@ -21,11 +20,10 @@ def get_current_user_bid(token: str = Depends(oauth2_scheme)) -> str:
         if not sub:
             raise ValueError("missing sub")
         return str(sub)
-    except jwt.PyJWTError:
+    except Exception:
         raise HTTPException(status_code=401, detail="Invalid or expired token")
 
 
 @router.get("/", response_model=list[UserOut])
 def get_users(db: Session = Depends(get_db), _: str = Depends(get_current_user_bid)):
     return list_users(db, limit=100, offset=0)
-
