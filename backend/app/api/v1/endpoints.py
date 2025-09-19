@@ -3,7 +3,8 @@ from sqlalchemy.orm import Session
 
 from ...deps.db import get_db
 from ...repository import endpoints as repo
-from ...schemas.endpoints import EndpointCreate, EndpointList, EndpointOut, EndpointUpdate
+from ...schemas.endpoints import EndpointCreate, EndpointList, EndpointOut, EndpointUpdate, SendTestRequest, SendTestResponse
+from ...services.sender.http_sender import HttpSender
 
 
 router = APIRouter(tags=["endpoints"])
@@ -117,3 +118,33 @@ def delete_endpoint(endpoint_bid: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Endpoint not found")
     db.commit()
     return None
+
+
+@router.post("/endpoints/{endpoint_bid}/send-test", response_model=SendTestResponse)
+def send_test(endpoint_bid: str, payload: SendTestRequest, db: Session = Depends(get_db)):
+    obj = repo.get_by_bid(db, endpoint_bid)
+    if not obj:
+        raise HTTPException(status_code=404, detail="Endpoint not found")
+    if (obj.transport or "http") != "http":
+        raise HTTPException(status_code=400, detail="Only HTTP endpoints support send-test")
+
+    endpoint_dict = {
+        "adapter_key": obj.adapter_key or "http.generic",
+        "endpoint_url": obj.endpoint_url,
+        "config": (obj.config or {}) | {"url": obj.endpoint_url},
+        "auth_type": None,
+        "auth_config": None,
+    }
+    # Build payload for Feishu bot if applicable
+    msg: dict
+    if (obj.adapter_key or "").startswith("http.feishu"):
+        msg = {"msg_type": "text", "content": {"text": payload.text}}
+    else:
+        msg = {"text": payload.text}
+
+    sender = HttpSender()
+    try:
+        result = sender.send(endpoint=endpoint_dict, payload=msg)
+        return SendTestResponse(status_code=int(result.get("status_code", 0)), body=result.get("body"))
+    except Exception as e:  # pragma: no cover
+        raise HTTPException(status_code=502, detail=f"Send failed: {e}")

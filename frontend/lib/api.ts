@@ -127,3 +127,10 @@ export async function listAuthProfiles(params?: { limit?: number; offset?: numbe
   const suffix = qs.toString() ? `?${qs.toString()}` : ""
   return apiFetch(`/api/v1/auth-profiles/${suffix}`)
 }
+
+export async function sendTestToEndpoint(endpointBid: string, text: string) {
+  return apiFetch(`/api/v1/endpoints/${endpointBid}/send-test`, {
+    method: "POST",
+    body: JSON.stringify({ text }),
+  })
+}

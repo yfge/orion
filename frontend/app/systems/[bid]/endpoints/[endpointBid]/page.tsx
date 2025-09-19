@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { getEndpoint, updateEndpoint, deleteEndpoint, listAuthProfiles } from "@/lib/api"
+import { getEndpoint, updateEndpoint, deleteEndpoint, listAuthProfiles, sendTestToEndpoint } from "@/lib/api"
 
 export default function EditEndpointPage() {
   const params = useParams<{ bid: string; endpointBid: string }>()
@@ -23,6 +23,8 @@ export default function EditEndpointPage() {
   const [loading, setLoading] = useState(true)
   const [authProfiles, setAuthProfiles] = useState<any[]>([])
   const [authProfileBid, setAuthProfileBid] = useState("")
+  const [testText, setTestText] = useState("")
+  const [testResult, setTestResult] = useState<string | null>(null)
 
   useEffect(() => {
     const load = async () => {
@@ -81,6 +83,16 @@ export default function EditEndpointPage() {
     }
   }
 
+  const onSendTest = async () => {
+    setTestResult(null)
+    try {
+      const res = await sendTestToEndpoint(endpointBid, testText || "Hello from Orion")
+      setTestResult(`HTTP ${res.status_code} ${typeof res.body === 'string' ? res.body : JSON.stringify(res.body)}`)
+    } catch (e: any) {
+      setTestResult(e.message || "发送失败")
+    }
+  }
+
   if (loading && !name) return <div className="container">加载中...</div>
 
   return (
@@ -123,6 +135,14 @@ export default function EditEndpointPage() {
         <div className="space-y-1">
           <Label htmlFor="config">配置 JSON</Label>
           <Textarea id="config" value={configText} onChange={(e) => setConfigText(e.target.value)} className="font-mono" />
+        </div>
+        <div className="space-y-1">
+          <Label htmlFor="test">测试发送（Feishu）</Label>
+          <div className="flex gap-2">
+            <Input id="test" value={testText} onChange={(e) => setTestText(e.target.value)} placeholder="测试消息文本" />
+            <Button type="button" variant="outline" onClick={onSendTest}>发送</Button>
+          </div>
+          {testResult && <p className="text-xs text-muted-foreground break-all">{testResult}</p>}
         </div>
         {error && <p className="text-sm text-red-600">{error}</p>}
         <div className="flex gap-2">

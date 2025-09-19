@@ -46,3 +46,11 @@ class EndpointList(BaseModel):
     limit: int
     offset: int
 
+
+class SendTestRequest(BaseModel):
+    text: str = Field(min_length=1, max_length=2000)
+
+
+class SendTestResponse(BaseModel):
+    status_code: int
+    body: dict | str | None = None
