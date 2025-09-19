@@ -118,7 +118,6 @@ class SendRecord(Base, BaseFieldsMixin):
     notification_api_id: Mapped[int] = mapped_column(
         ForeignKey("notification_apis.id", ondelete="RESTRICT"), nullable=False
     )
-    status: Mapped[int] = mapped_column(SmallInteger, server_default="0", nullable=False)
     send_time: Mapped[DateTime | None] = mapped_column(DateTime, nullable=True)
     result: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     remark: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -143,7 +142,6 @@ class SendDetail(Base, BaseFieldsMixin):
     attempt_no: Mapped[int] = mapped_column(Integer, server_default="1", nullable=False)
     request_payload: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     response_payload: Mapped[dict | None] = mapped_column(JSON, nullable=True)
-    status: Mapped[int] = mapped_column(SmallInteger, server_default="0", nullable=False)
     sent_at: Mapped[DateTime | None] = mapped_column(DateTime, nullable=True)
     error: Mapped[str | None] = mapped_column(Text, nullable=True)
 
@@ -160,4 +158,3 @@ class User(Base, BaseFieldsMixin):
     email: Mapped[str | None] = mapped_column(String(255), nullable=True)
     phone: Mapped[str | None] = mapped_column(String(32), nullable=True)
     hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
-

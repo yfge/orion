@@ -101,7 +101,6 @@ def upgrade() -> None:
         sa.Column("send_record_bid", sa.String(length=32), nullable=False),
         sa.Column("message_definition_id", sa.Integer(), nullable=False),
         sa.Column("notification_api_id", sa.Integer(), nullable=False),
-        sa.Column("status", sa.SmallInteger(), server_default=sa.text("0"), nullable=False),
         sa.Column("send_time", sa.DateTime(), nullable=True),
         sa.Column("result", sa.JSON(), nullable=True),
         sa.Column("remark", sa.Text(), nullable=True),
@@ -120,7 +119,6 @@ def upgrade() -> None:
         sa.Column("attempt_no", sa.Integer(), server_default=sa.text("1"), nullable=False),
         sa.Column("request_payload", sa.JSON(), nullable=True),
         sa.Column("response_payload", sa.JSON(), nullable=True),
-        sa.Column("status", sa.SmallInteger(), server_default=sa.text("0"), nullable=False),
         sa.Column("sent_at", sa.DateTime(), nullable=True),
         sa.Column("error", sa.Text(), nullable=True),
         *_common_columns(),
@@ -166,4 +164,3 @@ def downgrade() -> None:
 
     op.drop_index("ix_business_systems_bid", table_name="business_systems")
     op.drop_table("business_systems")
-
