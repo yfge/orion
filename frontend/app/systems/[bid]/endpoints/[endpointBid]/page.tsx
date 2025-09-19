@@ -112,6 +112,15 @@ export default function EditEndpointPage() {
           <Input id="endpointUrl" value={endpointUrl} onChange={(e) => setEndpointUrl(e.target.value)} />
         </div>
         <div className="space-y-1">
+          <Label htmlFor="authProfile">认证配置（可选）</Label>
+          <select id="authProfile" className="border rounded-md h-9 px-3 text-sm w-full" value={authProfileBid} onChange={(e) => setAuthProfileBid(e.target.value)}>
+            <option value="">不使用认证</option>
+            {authProfiles.map((p) => (
+              <option key={p.auth_profile_bid} value={p.auth_profile_bid}>{p.name} ({p.type})</option>
+            ))}
+          </select>
+        </div>
+        <div className="space-y-1">
           <Label htmlFor="config">配置 JSON</Label>
           <Textarea id="config" value={configText} onChange={(e) => setConfigText(e.target.value)} className="font-mono" />
         </div>
@@ -124,12 +133,3 @@ export default function EditEndpointPage() {
     </div>
   )
 }
-        <div className="space-y-1">
-          <Label htmlFor="authProfile">认证配置（可选）</Label>
-          <select id="authProfile" className="border rounded-md h-9 px-3 text-sm w-full" value={authProfileBid} onChange={(e) => setAuthProfileBid(e.target.value)}>
-            <option value="">不使用认证</option>
-            {authProfiles.map((p) => (
-              <option key={p.auth_profile_bid} value={p.auth_profile_bid}>{p.name} ({p.type})</option>
-            ))}
-          </select>
-        </div>

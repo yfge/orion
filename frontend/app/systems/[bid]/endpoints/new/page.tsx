@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -52,7 +52,7 @@ export default function NewEndpointPage() {
   }
 
   // load auth profiles
-  React.useEffect(() => {
+  useEffect(() => {
     (async () => {
       try {
         const data = await listAuthProfiles({ limit: 100, offset: 0 })
@@ -94,6 +94,15 @@ export default function NewEndpointPage() {
           <Input id="endpointUrl" value={endpointUrl} onChange={(e) => setEndpointUrl(e.target.value)} placeholder="https://..." />
         </div>
         <div className="space-y-1">
+          <Label htmlFor="authProfile">认证配置（可选）</Label>
+          <select id="authProfile" className="border rounded-md h-9 px-3 text-sm w-full" value={authProfileBid} onChange={(e) => setAuthProfileBid(e.target.value)}>
+            <option value="">不使用认证</option>
+            {authProfiles.map((p) => (
+              <option key={p.auth_profile_bid} value={p.auth_profile_bid}>{p.name} ({p.type})</option>
+            ))}
+          </select>
+        </div>
+        <div className="space-y-1">
           <Label htmlFor="config">配置 JSON</Label>
           <Textarea id="config" value={configText} onChange={(e) => setConfigText(e.target.value)} className="font-mono" />
         </div>
@@ -106,12 +115,3 @@ export default function NewEndpointPage() {
     </div>
   )
 }
-        <div className="space-y-1">
-          <Label htmlFor="authProfile">认证配置（可选）</Label>
-          <select id="authProfile" className="border rounded-md h-9 px-3 text-sm w-full" value={authProfileBid} onChange={(e) => setAuthProfileBid(e.target.value)}>
-            <option value="">不使用认证</option>
-            {authProfiles.map((p) => (
-              <option key={p.auth_profile_bid} value={p.auth_profile_bid}>{p.name} ({p.type})</option>
-            ))}
-          </select>
-        </div>
