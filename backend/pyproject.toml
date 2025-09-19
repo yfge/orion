@@ -22,6 +22,9 @@ dependencies = [
   "httpx>=0.25.0",
   # MySQL driver (pure Python)
   "pymysql>=1.0.3",
+  # Auth
+  "PyJWT>=2.8.0",
+  "passlib[bcrypt]>=1.7.4",
 ]
 
 [project.optional-dependencies]
