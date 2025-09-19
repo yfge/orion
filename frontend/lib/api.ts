@@ -57,3 +57,37 @@ export async function fetchUsers() {
   return apiFetch("/api/v1/users/")
 }
 
+// Business systems
+export interface BusinessSystemPayload {
+  name: string
+  base_url?: string | null
+  auth_method?: string | null
+  app_id?: string | null
+  app_secret?: string | null
+  status?: number | null
+}
+
+export async function listSystems(params?: { limit?: number; offset?: number; q?: string }) {
+  const qs = new URLSearchParams()
+  if (params?.limit) qs.set("limit", String(params.limit))
+  if (params?.offset) qs.set("offset", String(params.offset))
+  if (params?.q) qs.set("q", params.q)
+  const suffix = qs.toString() ? `?${qs.toString()}` : ""
+  return apiFetch(`/api/v1/systems/${suffix}`)
+}
+
+export async function createSystem(payload: BusinessSystemPayload) {
+  return apiFetch("/api/v1/systems/", { method: "POST", body: JSON.stringify(payload) })
+}
+
+export async function getSystem(bid: string) {
+  return apiFetch(`/api/v1/systems/${bid}`)
+}
+
+export async function updateSystem(bid: string, payload: Partial<BusinessSystemPayload>) {
+  return apiFetch(`/api/v1/systems/${bid}`, { method: "PATCH", body: JSON.stringify(payload) })
+}
+
+export async function deleteSystem(bid: string) {
+  return apiFetch(`/api/v1/systems/${bid}`, { method: "DELETE" })
+}
