@@ -1,0 +1,29 @@
+{
+  "name": "orion-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 3000",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "next": "14.2.5",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "next-themes": "0.3.0",
+    "clsx": "2.1.1",
+    "class-variance-authority": "0.7.0",
+    "tailwind-merge": "2.5.2",
+    "lucide-react": "0.452.0"
+  },
+  "devDependencies": {
+    "typescript": "5.6.2",
+    "eslint": "8.57.0",
+    "postcss": "8.4.40",
+    "autoprefixer": "10.4.20",
+    "tailwindcss": "3.4.10"
+  }
+}
+
