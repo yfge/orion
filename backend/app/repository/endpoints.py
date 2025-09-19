@@ -76,22 +76,33 @@ def list_endpoints(db: Session, *, system_bid: str, limit: int = 50, offset: int
         base = base.where(NotificationAPI.name.ilike(like))
         count_q = count_q.where(NotificationAPI.name.ilike(like))
     items = list(db.execute(base.order_by(NotificationAPI.id.desc()).limit(limit).offset(offset)).scalars())
+    # Attach business_system_bid and auth_profile_bid for each item (avoid extra queries via simple lookups)
+    bs_bid = db.execute(select(BusinessSystem.business_system_bid).where(BusinessSystem.id == system_id)).scalar_one()
+    ap_map = {}
+    for it in items:
+        it.business_system_bid = bs_bid  # type: ignore[attr-defined]
+        if it.auth_profile_id:
+            if it.auth_profile_id not in ap_map:
+                ap_bid = db.execute(select(AuthProfile.auth_profile_bid).where(AuthProfile.id == it.auth_profile_id)).scalar_one_or_none()
+                ap_map[it.auth_profile_id] = ap_bid
+            it.auth_profile_bid = ap_map.get(it.auth_profile_id)  # type: ignore[attr-defined]
     total = db.execute(count_q).scalar_one()
     return items, int(total)
 
 
 def get_by_bid(db: Session, bid: str) -> NotificationAPI | None:
     stmt = (
-        select(NotificationAPI, BusinessSystem.business_system_bid)
+        select(NotificationAPI, BusinessSystem.business_system_bid, AuthProfile.auth_profile_bid)
         .join(BusinessSystem, NotificationAPI.business_system_id == BusinessSystem.id)
+        .join(AuthProfile, NotificationAPI.auth_profile_id == AuthProfile.id, isouter=True)
         .where(NotificationAPI.notification_api_bid == bid, NotificationAPI.is_deleted == False)  # noqa: E712
     )
     row = db.execute(stmt).first()
     if not row:
         return None
-    # attach for output convenience
     api: NotificationAPI = row[0]
     api.business_system_bid = row[1]  # type: ignore[attr-defined]
+    api.auth_profile_bid = row[2]  # type: ignore[attr-defined]
     return api
 
 
@@ -135,4 +146,3 @@ def soft_delete_by_bid(db: Session, bid: str) -> bool:
     obj.is_deleted = True
     db.flush()
     return True
-

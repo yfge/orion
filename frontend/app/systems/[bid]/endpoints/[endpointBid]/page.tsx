@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { getEndpoint, updateEndpoint, deleteEndpoint } from "@/lib/api"
+import { getEndpoint, updateEndpoint, deleteEndpoint, listAuthProfiles } from "@/lib/api"
 
 export default function EditEndpointPage() {
   const params = useParams<{ bid: string; endpointBid: string }>()
@@ -21,6 +21,8 @@ export default function EditEndpointPage() {
   const [configText, setConfigText] = useState("{}")
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [authProfiles, setAuthProfiles] = useState<any[]>([])
+  const [authProfileBid, setAuthProfileBid] = useState("")
 
   useEffect(() => {
     const load = async () => {
@@ -31,6 +33,7 @@ export default function EditEndpointPage() {
         setAdapterKey(data.adapter_key || "")
         setEndpointUrl(data.endpoint_url || "")
         setConfigText(JSON.stringify(data.config || {}, null, 2))
+        setAuthProfileBid(data.auth_profile_bid || "")
       } catch (err: any) {
         setError(err.message || "加载失败")
       } finally {
@@ -38,6 +41,12 @@ export default function EditEndpointPage() {
       }
     }
     if (endpointBid) load()
+    ;(async () => {
+      try {
+        const res = await listAuthProfiles({ limit: 100, offset: 0 })
+        setAuthProfiles(res.items || [])
+      } catch {}
+    })()
   }, [endpointBid])
 
   const onSubmit = async (e: React.FormEvent) => {
@@ -52,6 +61,7 @@ export default function EditEndpointPage() {
         adapter_key: adapterKey || null,
         endpoint_url: endpointUrl || null,
         config: cfg,
+        auth_profile_bid: authProfileBid || null,
       })
       router.push(`/systems/${systemBid}`)
     } catch (err: any) {
@@ -87,7 +97,10 @@ export default function EditEndpointPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-1">
             <Label htmlFor="transport">类型</Label>
-            <Input id="transport" value={transport} onChange={(e) => setTransport(e.target.value)} />
+            <select id="transport" className="border rounded-md h-9 px-3 text-sm w-full" value={transport} onChange={(e) => setTransport(e.target.value)}>
+              <option value="http">http</option>
+              <option value="mq">mq</option>
+            </select>
           </div>
           <div className="space-y-1">
             <Label htmlFor="adapterKey">适配器</Label>
@@ -111,4 +124,12 @@ export default function EditEndpointPage() {
     </div>
   )
 }
-
+        <div className="space-y-1">
+          <Label htmlFor="authProfile">认证配置（可选）</Label>
+          <select id="authProfile" className="border rounded-md h-9 px-3 text-sm w-full" value={authProfileBid} onChange={(e) => setAuthProfileBid(e.target.value)}>
+            <option value="">不使用认证</option>
+            {authProfiles.map((p) => (
+              <option key={p.auth_profile_bid} value={p.auth_profile_bid}>{p.name} ({p.type})</option>
+            ))}
+          </select>
+        </div>

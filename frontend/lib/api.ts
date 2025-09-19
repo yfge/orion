@@ -117,3 +117,13 @@ export async function updateEndpoint(endpointBid: string, payload: any) {
 export async function deleteEndpoint(endpointBid: string) {
   return apiFetch(`/api/v1/endpoints/${endpointBid}`, { method: "DELETE" })
 }
+
+// Auth profiles
+export async function listAuthProfiles(params?: { limit?: number; offset?: number; q?: string }) {
+  const qs = new URLSearchParams()
+  if (params?.limit) qs.set("limit", String(params.limit))
+  if (params?.offset) qs.set("offset", String(params.offset))
+  if (params?.q) qs.set("q", params.q)
+  const suffix = qs.toString() ? `?${qs.toString()}` : ""
+  return apiFetch(`/api/v1/auth-profiles/${suffix}`)
+}

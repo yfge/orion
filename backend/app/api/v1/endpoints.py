@@ -48,13 +48,13 @@ def list_endpoints(system_bid: str, db: Session = Depends(get_db), limit: int = 
     shaped = [
         {
             "notification_api_bid": it.notification_api_bid,
-            "business_system_bid": system_bid,
+            "business_system_bid": getattr(it, "business_system_bid", system_bid),
             "name": it.name,
             "transport": it.transport,
             "adapter_key": it.adapter_key,
             "endpoint_url": it.endpoint_url,
             "config": it.config,
-            "auth_profile_bid": None,
+            "auth_profile_bid": getattr(it, "auth_profile_bid", None),
             "status": it.status,
         }
         for it in items
@@ -75,7 +75,7 @@ def get_endpoint(endpoint_bid: str, db: Session = Depends(get_db)):
         "adapter_key": obj.adapter_key,
         "endpoint_url": obj.endpoint_url,
         "config": obj.config,
-        "auth_profile_bid": None,
+        "auth_profile_bid": getattr(obj, "auth_profile_bid", None),
         "status": obj.status,
     }
 
@@ -97,7 +97,6 @@ def update_endpoint(endpoint_bid: str, payload: EndpointUpdate, db: Session = De
         raise HTTPException(status_code=404, detail="Endpoint not found")
     db.commit()
     db.refresh(obj)
-    bs = repo._get_system_id_by_bid  # type: ignore
     return {
         "notification_api_bid": obj.notification_api_bid,
         "business_system_bid": getattr(obj, "business_system_bid", ""),
@@ -118,4 +117,3 @@ def delete_endpoint(endpoint_bid: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Endpoint not found")
     db.commit()
     return None
-

@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { createEndpoint } from "@/lib/api"
+import { createEndpoint, listAuthProfiles } from "@/lib/api"
 
 export default function NewEndpointPage() {
   const params = useParams<{ bid: string }>()
@@ -18,6 +18,8 @@ export default function NewEndpointPage() {
   const [adapterKey, setAdapterKey] = useState("")
   const [endpointUrl, setEndpointUrl] = useState("")
   const [configText, setConfigText] = useState("{\n  \"method\": \"POST\",\n  \"headers\": {\n    \"Content-Type\": \"application/json\"\n  }\n}")
+  const [authProfiles, setAuthProfiles] = useState<any[]>([])
+  const [authProfileBid, setAuthProfileBid] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
@@ -33,6 +35,7 @@ export default function NewEndpointPage() {
         adapter_key: adapterKey || null,
         endpoint_url: endpointUrl || null,
         config: cfg,
+        auth_profile_bid: authProfileBid || null,
         status: 0,
       })
       router.push(`/systems/${systemBid}`)
@@ -42,6 +45,23 @@ export default function NewEndpointPage() {
       setLoading(false)
     }
   }
+
+  const adapterOptions: Record<string, string[]> = {
+    http: ["http.generic", "http.feishu_bot"],
+    mq: ["mq.kafka", "mq.rabbit"],
+  }
+
+  // load auth profiles
+  React.useEffect(() => {
+    (async () => {
+      try {
+        const data = await listAuthProfiles({ limit: 100, offset: 0 })
+        setAuthProfiles(data.items || [])
+      } catch (e) {
+        // ignore
+      }
+    })()
+  }, [])
 
   return (
     <div className="container max-w-2xl">
@@ -54,11 +74,19 @@ export default function NewEndpointPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-1">
             <Label htmlFor="transport">类型</Label>
-            <Input id="transport" value={transport} onChange={(e) => setTransport(e.target.value)} placeholder="http 或 mq" />
+            <select id="transport" className="border rounded-md h-9 px-3 text-sm w-full" value={transport} onChange={(e) => { setTransport(e.target.value); setAdapterKey("") }}>
+              <option value="http">http</option>
+              <option value="mq">mq</option>
+            </select>
           </div>
           <div className="space-y-1">
             <Label htmlFor="adapterKey">适配器</Label>
-            <Input id="adapterKey" value={adapterKey} onChange={(e) => setAdapterKey(e.target.value)} placeholder="http.generic / http.feishu_bot / mq.kafka / mq.rabbit" />
+            <select id="adapterKey" className="border rounded-md h-9 px-3 text-sm w-full" value={adapterKey} onChange={(e) => setAdapterKey(e.target.value)}>
+              <option value="">选择适配器</option>
+              {(adapterOptions[transport] || []).map((opt) => (
+                <option key={opt} value={opt}>{opt}</option>
+              ))}
+            </select>
           </div>
         </div>
         <div className="space-y-1">
@@ -78,4 +106,12 @@ export default function NewEndpointPage() {
     </div>
   )
 }
-
+        <div className="space-y-1">
+          <Label htmlFor="authProfile">认证配置（可选）</Label>
+          <select id="authProfile" className="border rounded-md h-9 px-3 text-sm w-full" value={authProfileBid} onChange={(e) => setAuthProfileBid(e.target.value)}>
+            <option value="">不使用认证</option>
+            {authProfiles.map((p) => (
+              <option key={p.auth_profile_bid} value={p.auth_profile_bid}>{p.name} ({p.type})</option>
+            ))}
+          </select>
+        </div>
