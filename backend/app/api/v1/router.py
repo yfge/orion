@@ -2,6 +2,7 @@ from fastapi import APIRouter
 from .auth import router as auth_router
 from .users import router as users_router
 from .systems import router as systems_router
+from .endpoints import router as endpoints_router
 
 
 router = APIRouter()
@@ -15,3 +16,4 @@ def ping():
 router.include_router(auth_router)
 router.include_router(users_router)
 router.include_router(systems_router)
+router.include_router(endpoints_router)

@@ -5,7 +5,8 @@ import { useParams, useRouter } from "next/navigation"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
-import { getSystem, updateSystem, deleteSystem } from "@/lib/api"
+import { getSystem, updateSystem, deleteSystem, listEndpoints } from "@/lib/api"
+import Link from "next/link"
 
 export default function EditSystemPage() {
   const params = useParams<{ bid: string }>()
@@ -19,6 +20,7 @@ export default function EditSystemPage() {
   const [appSecret, setAppSecret] = useState("")
   const [status, setStatus] = useState<number>(0)
   const router = useRouter()
+  const [endpoints, setEndpoints] = useState<any[]>([])
 
   const load = async () => {
     setLoading(true)
@@ -31,6 +33,9 @@ export default function EditSystemPage() {
       setAppId(data.app_id || "")
       setAppSecret(data.app_secret || "")
       setStatus(typeof data.status === "number" ? data.status : 0)
+      // load endpoints
+      const eps = await listEndpoints({ systemBid: bid, limit: 50, offset: 0 })
+      setEndpoints(eps.items || [])
     } catch (err: any) {
       setError(err.message || "加载失败")
     } finally {
@@ -70,7 +75,7 @@ export default function EditSystemPage() {
   if (loading && !name) return <div className="container">加载中...</div>
 
   return (
-    <div className="container max-w-2xl space-y-4">
+    <div className="container max-w-3xl space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">编辑业务系统</h1>
         <Button variant="outline" onClick={onDelete} className="text-red-600 border-red-600">删除</Button>
@@ -110,7 +115,44 @@ export default function EditSystemPage() {
           <Button type="button" variant="outline" onClick={() => router.push("/systems")}>取消</Button>
         </div>
       </form>
+
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-semibold">端点（Endpoints）</h2>
+          <Link href={`/systems/${bid}/endpoints/new`} className="text-primary hover:underline">新建端点</Link>
+        </div>
+        <div className="overflow-x-auto rounded-lg border">
+          <table className="min-w-full text-sm">
+            <thead className="bg-muted/50">
+              <tr>
+                <th className="px-3 py-2 text-left">名称</th>
+                <th className="px-3 py-2 text-left">类型</th>
+                <th className="px-3 py-2 text-left">适配器</th>
+                <th className="px-3 py-2 text-left">地址</th>
+                <th className="px-3 py-2 text-left">操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              {endpoints.map((ep) => (
+                <tr key={ep.notification_api_bid} className="border-t">
+                  <td className="px-3 py-2">{ep.name}</td>
+                  <td className="px-3 py-2">{ep.transport || "http"}</td>
+                  <td className="px-3 py-2">{ep.adapter_key || "—"}</td>
+                  <td className="px-3 py-2 text-muted-foreground">{ep.endpoint_url || ep.config?.url || "—"}</td>
+                  <td className="px-3 py-2">
+                    <Link href={`/systems/${bid}/endpoints/${ep.notification_api_bid}`} className="text-primary hover:underline">编辑</Link>
+                  </td>
+                </tr>
+              ))}
+              {endpoints.length === 0 && (
+                <tr>
+                  <td className="px-3 py-4 text-muted-foreground" colSpan={5}>暂无端点</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   )
 }
-

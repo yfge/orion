@@ -91,3 +91,29 @@ export async function updateSystem(bid: string, payload: Partial<BusinessSystemP
 export async function deleteSystem(bid: string) {
   return apiFetch(`/api/v1/systems/${bid}`, { method: "DELETE" })
 }
+
+// Endpoints (Notification APIs)
+export async function listEndpoints(params: { systemBid: string; limit?: number; offset?: number; q?: string }) {
+  const qs = new URLSearchParams()
+  if (params.limit) qs.set("limit", String(params.limit))
+  if (params.offset) qs.set("offset", String(params.offset))
+  if (params.q) qs.set("q", params.q)
+  const suffix = qs.toString() ? `?${qs.toString()}` : ""
+  return apiFetch(`/api/v1/systems/${params.systemBid}/endpoints${suffix}`)
+}
+
+export async function createEndpoint(systemBid: string, payload: any) {
+  return apiFetch(`/api/v1/systems/${systemBid}/endpoints`, { method: "POST", body: JSON.stringify(payload) })
+}
+
+export async function getEndpoint(endpointBid: string) {
+  return apiFetch(`/api/v1/endpoints/${endpointBid}`)
+}
+
+export async function updateEndpoint(endpointBid: string, payload: any) {
+  return apiFetch(`/api/v1/endpoints/${endpointBid}`, { method: "PATCH", body: JSON.stringify(payload) })
+}
+
+export async function deleteEndpoint(endpointBid: string) {
+  return apiFetch(`/api/v1/endpoints/${endpointBid}`, { method: "DELETE" })
+}
