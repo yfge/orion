@@ -194,3 +194,7 @@ export async function listDispatchesByEndpoint(endpointBid: string) {
 export async function createDispatchForEndpoint(endpointBid: string, payload: { message_definition_bid: string; mapping?: any; enabled?: boolean }) {
   return apiFetch(`/api/v1/endpoints/${endpointBid}/dispatches`, { method: "POST", body: JSON.stringify(payload) })
 }
+
+export async function validateSchema(payload: { schema: any; data: any }) {
+  return apiFetch(`/api/v1/schema/validate`, { method: "POST", body: JSON.stringify(payload) })
+}

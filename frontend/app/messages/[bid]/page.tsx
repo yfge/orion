@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { getMessageDef, updateMessageDef, deleteMessageDef, listAllEndpoints, listDispatches, createDispatch, updateDispatch, deleteDispatch } from "@/lib/api"
+import { JsonSchemaForm } from "@/components/jsonschema/Form"
+import { getMessageDef, updateMessageDef, deleteMessageDef, listAllEndpoints, listDispatches, createDispatch, updateDispatch, deleteDispatch, validateSchema } from "@/lib/api"
 
 export default function EditMessagePage() {
   const params = useParams<{ bid: string }>()
@@ -24,6 +25,9 @@ export default function EditMessagePage() {
   const [newEndpointBid, setNewEndpointBid] = useState("")
   const [newMappingText, setNewMappingText] = useState("{}")
   const [newEnabled, setNewEnabled] = useState(true)
+  const [previewValue, setPreviewValue] = useState<any>({})
+  const [sampleDataText, setSampleDataText] = useState("{\n  \"text\": \"你好 Orion\"\n}")
+  const [validateResult, setValidateResult] = useState<string | null>(null)
 
   useEffect(() => {
     const load = async () => {
@@ -69,6 +73,10 @@ export default function EditMessagePage() {
     } catch (e: any) {
       alert(e.message || "删除失败")
     }
+  }
+
+  function safeParse(text: string) {
+    try { return JSON.parse(text || '{}') } catch { return {} }
   }
 
   const onAddDispatch = async () => {
@@ -127,6 +135,25 @@ export default function EditMessagePage() {
         <div className="space-y-1">
           <Label htmlFor="schema">Schema JSON</Label>
           <Textarea id="schema" className="font-mono" value={schemaText} onChange={(e) => setSchemaText(e.target.value)} />
+        </div>
+        <div className="space-y-2">
+          <Label>Schema 预览表单（基础类型）</Label>
+          <JsonSchemaForm schema={safeParse(schemaText)} value={previewValue} onChange={setPreviewValue} />
+        </div>
+        <div className="space-y-1">
+          <Label htmlFor="sample">示例数据（用于校验）</Label>
+          <Textarea id="sample" className="font-mono" value={sampleDataText} onChange={(e) => setSampleDataText(e.target.value)} />
+          <div>
+            <Button type="button" variant="outline" onClick={async () => {
+              try {
+                const res = await validateSchema({ schema: safeParse(schemaText), data: JSON.parse(sampleDataText) })
+                setValidateResult(res.valid ? "校验通过" : `校验失败: ${(res.errors||[]).map((e:any)=>e.message).join('; ')}`)
+              } catch (e:any) {
+                setValidateResult(e.message || '校验异常')
+              }
+            }}>校验示例数据</Button>
+            {validateResult && <p className="text-xs text-muted-foreground mt-1">{validateResult}</p>}
+          </div>
         </div>
         {error && <p className="text-sm text-red-600">{error}</p>}
         <div className="flex gap-2">

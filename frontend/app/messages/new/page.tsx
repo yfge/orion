@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
+import { JsonSchemaForm } from "@/components/jsonschema/Form"
+import { validateSchema } from "@/lib/api"
 import { createMessageDef } from "@/lib/api"
 
 export default function NewMessagePage() {
@@ -16,6 +18,9 @@ export default function NewMessagePage() {
   const [status, setStatus] = useState<number>(0)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [sampleDataText, setSampleDataText] = useState("{\n  \"text\": \"你好 Orion\"\n}")
+  const [previewValue, setPreviewValue] = useState<any>({})
+  const [validateResult, setValidateResult] = useState<string | null>(null)
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -30,6 +35,10 @@ export default function NewMessagePage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  function safeParse(text: string) {
+    try { return JSON.parse(text || '{}') } catch { return {} }
   }
 
   return (
@@ -59,6 +68,25 @@ export default function NewMessagePage() {
           <Label htmlFor="schema">Schema JSON</Label>
           <Textarea id="schema" className="font-mono" value={schemaText} onChange={(e) => setSchemaText(e.target.value)} />
         </div>
+        <div className="space-y-2">
+          <Label>Schema 预览表单（基础类型）</Label>
+          <JsonSchemaForm schema={safeParse(schemaText)} value={previewValue} onChange={setPreviewValue} />
+        </div>
+        <div className="space-y-1">
+          <Label htmlFor="sample">示例数据（用于校验）</Label>
+          <Textarea id="sample" className="font-mono" value={sampleDataText} onChange={(e) => setSampleDataText(e.target.value)} />
+          <div>
+            <Button type="button" variant="outline" onClick={async () => {
+              try {
+                const res = await validateSchema({ schema: safeParse(schemaText), data: JSON.parse(sampleDataText) })
+                setValidateResult(res.valid ? "校验通过" : `校验失败: ${(res.errors||[]).map((e:any)=>e.message).join('; ')}`)
+              } catch (e:any) {
+                setValidateResult(e.message || '校验异常')
+              }
+            }}>校验示例数据</Button>
+            {validateResult && <p className="text-xs text-muted-foreground mt-1">{validateResult}</p>}
+          </div>
+        </div>
         {error && <p className="text-sm text-red-600">{error}</p>}
         <div className="flex gap-2">
           <Button type="submit" disabled={loading}>{loading ? "创建中..." : "创建"}</Button>
@@ -68,4 +96,3 @@ export default function NewMessagePage() {
     </div>
   )
 }
-

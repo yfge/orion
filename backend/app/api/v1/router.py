@@ -6,6 +6,7 @@ from .endpoints import router as endpoints_router
 from .auth_profiles import router as auth_profiles_router
 from .message_definitions import router as msg_defs_router
 from .notify import router as notify_router
+from .schema import router as schema_router
 
 
 router = APIRouter()
@@ -23,3 +24,4 @@ router.include_router(endpoints_router)
 router.include_router(auth_profiles_router)
 router.include_router(msg_defs_router)
 router.include_router(notify_router)
+router.include_router(schema_router)
