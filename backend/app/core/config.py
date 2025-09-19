@@ -12,6 +12,12 @@ class Settings(BaseSettings):
     # Example: sqlite:///./orion.db or postgresql+psycopg://user:pass@host:5432/db
     DATABASE_URL: str = "sqlite:///./orion.db"
 
+    # Security
+    SECRET_KEY: str | None = None
+
+    # CORS (comma-separated or JSON array via env); if empty, use sensible dev defaults in app
+    CORS_ORIGINS: list[str] = []
+
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:
@@ -19,4 +25,3 @@ def get_settings() -> Settings:
 
 
 settings = get_settings()
-

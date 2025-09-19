@@ -2,6 +2,7 @@ import "./globals.css"
 import { Inter } from "next/font/google"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Navbar } from "@/components/navbar"
+import { AuthGate } from "@/components/auth-gate"
 import { Sidebar } from "@/components/sidebar"
 
 const inter = Inter({ subsets: ["latin"] })
@@ -22,7 +23,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <aside className="hidden lg:block border-r bg-card/50">
                 <Sidebar />
               </aside>
-              <main className="p-4 md:p-6 lg:p-8">{children}</main>
+              <main className="p-4 md:p-6 lg:p-8">
+                <AuthGate>{children}</AuthGate>
+              </main>
             </div>
           </div>
         </ThemeProvider>
@@ -30,4 +33,3 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     </html>
   )
 }
-

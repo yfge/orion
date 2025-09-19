@@ -6,6 +6,7 @@ const items = [
   { href: "/apis", label: "通知 API" },
   { href: "/messages", label: "消息定义" },
   { href: "/records", label: "发送记录" },
+  { href: "/users", label: "用户" },
 ]
 
 export function Sidebar() {
@@ -23,4 +24,3 @@ export function Sidebar() {
     </nav>
   )
 }
-

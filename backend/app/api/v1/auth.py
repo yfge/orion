@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 
 from ...core.security import create_access_token, verify_password
 from ...deps.db import get_db
@@ -17,10 +18,15 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
 def register(payload: RegisterRequest, db: Session = Depends(get_db)):
     if get_by_username(db, payload.username):
         raise HTTPException(status_code=400, detail="Username already exists")
-    user = create_user(db, payload.username, payload.password, payload.email)
-    db.commit()
-    db.refresh(user)
-    return user
+    try:
+        user = create_user(db, payload.username, payload.password, payload.email)
+        db.commit()
+        db.refresh(user)
+        return user
+    except IntegrityError:
+        db.rollback()
+        # Handles race condition or other unique constraints
+        raise HTTPException(status_code=400, detail="Username already exists")
 
 
 @router.post("/login", response_model=TokenResponse)
@@ -30,4 +36,3 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     token = create_access_token(subject=user.user_bid)
     return TokenResponse(access_token=token)
-
