@@ -16,6 +16,7 @@ class Settings(BaseSettings):
 
     # Security
     SECRET_KEY: str | None = None
+    PUBLIC_API_KEY: str | None = None
 
     # CORS (supports '*', comma-separated, or JSON array via env); if empty, use sensible dev defaults in app
     CORS_ORIGINS: list[str] | str | None = []
