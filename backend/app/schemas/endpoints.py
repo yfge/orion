@@ -27,7 +27,7 @@ class EndpointUpdate(BaseModel):
 
 class EndpointOut(BaseModel):
     notification_api_bid: str
-    business_system_bid: str
+    business_system_bid: str | None = None
     name: str
     transport: str | None
     adapter_key: str | None
