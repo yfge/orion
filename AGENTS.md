@@ -50,26 +50,29 @@ Security and secrets
 - Never commit secrets or tokens. Use environment variables or a secret manager.
 
 AI session logging (agents_chat)
-- Purpose: persist ai-coding & vibe coding conversations for audit, recall, and knowledge capture.
-- Root: `agents_chat/`. Organize by date (year/month/day).
-- Filename: `agents_chat/YYYY/MM/DD/<timestamp>-<short-topic>.md`.
-- YAML frontmatter (recommended):
+- Importance: This is a vibe-coding project. Agents chat logs are core materials for review and learning; they must be complete, traceable, and reproducible.
+- Directory: Root `agents_chat/`, organized by date folders: `agents_chat/YYYY/MM/DD/`.
+- Filename (REQUIRED): `YYYY-MM-DDTHH-MM-SSZ-<topic>.md` (e.g., `2025-09-19T07-30-03Z-backend-systems-api.md`).
+- YAML frontmatter (REQUIRED):
   ```yaml
   ---
-  id: 2024-09-01T10-23-45Z-orion-scope
-  date: 2024-09-01T10:23:45Z
+  id: 2025-09-19T07-30-03Z-backend-systems-api
+  date: 2025-09-19T07:30:03Z
   participants: [human, orion-assistant]
-  models: [gpt-4o, claude, gemini]
-  tags: [design, backend, docs]
+  models: [gpt-4o]
+  tags: [backend, api]
   related_paths:
-    - backend/
-    - docs/architecture/
-  summary: "Initial architecture and directory conventions"
+    - backend/app/api/v1/systems.py
+  summary: "Implement business systems API and tests"
   ---
   ```
-- Body suggestions:
-  - Short summary (what, why, outcome, TODOs).
-  - Key decisions and rationale; link PRs/commits.
-  - No sensitive data; redact tokens and secrets.
-- Frequency: create an entry for each major milestone/decision; long sessions split by day.
-- Versioning: keep under Git; consider periodic archival for large logs.
+- Body (REQUIRED sections):
+  - User original prompt and requirements: paste or summarize the user’s original instruction and goals (redact sensitive bits when necessary).
+  - Background and goals: why we do this, and what to achieve.
+  - Changes: what changed (files/modules/endpoints), key decisions and trade-offs.
+  - Outcome and impact: feature/API/tests/docs status and usability.
+  - Next steps (TODO): follow-ups, risks, validation points.
+  - Linked commits/PRs: list commit messages or PR links when available.
+- Frequency: Every significant commit (or commit group) must be paired with an agents_chat entry; split long sessions by day.
+- Language: Chinese is preferred for this repo; English mirror optional. Consistency matters more than perfection.
+- Privacy: never include secrets; always redact tokens/keys.
