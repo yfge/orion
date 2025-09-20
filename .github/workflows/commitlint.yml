@@ -26,11 +26,12 @@ jobs:
       - name: Lint commits (PR)
         if: ${{ github.event_name == 'pull_request' }}
         run: |
-          npx commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.sha }}
+          echo "Linting commits from ${{ github.event.pull_request.base.sha }} to ${{ github.sha }}"
+          npx commitlint --verbose --from ${{ github.event.pull_request.base.sha }} --to ${{ github.sha }}
 
       - name: Lint last commits (push)
         if: ${{ github.event_name == 'push' }}
         run: |
           # Lint last 20 commits on push to main
-          npx commitlint --from HEAD~20 --to HEAD
-
+          echo "Linting last 20 commits on push to $GITHUB_REF_NAME"
+          npx commitlint --verbose --from HEAD~20 --to HEAD || npx commitlint --verbose --from $(git rev-list --max-count=1 HEAD~10) --to HEAD

@@ -1,6 +1,8 @@
+const englishPlugin = require('./tools/commitlint-plugin-english')
+
 module.exports = {
   extends: ['@commitlint/config-conventional'],
-  plugins: ['./tools/commitlint-plugin-english'],
+  plugins: [englishPlugin],
   rules: {
     // Enforce English (ASCII) header only
     'header-english': [2, 'always'],
@@ -13,4 +15,3 @@ module.exports = {
     'header-max-length': [2, 'always', 72],
   },
 }
-
