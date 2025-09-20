@@ -45,20 +45,13 @@ export default function ApisPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">通知 API</h1>
+        <Link href="/apis/new" className="inline-flex items-center rounded-md border px-3 h-9 text-sm border-input text-foreground hover:bg-accent">新建</Link>
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
         <Input placeholder="按名称搜索" value={q} onChange={(e) => setQ(e.target.value)} className="w-64" />
         <Button type="button" variant="outline" onClick={() => { setOffset(0); load() }} disabled={loading}>搜索</Button>
-        <div className="ml-auto flex items-center gap-2">
-          <select className="border rounded h-9 px-3 text-sm" value={newSystemBid} onChange={(e) => setNewSystemBid(e.target.value)}>
-            <option value="">选择业务系统</option>
-            {systems.map((s) => (
-              <option key={s.business_system_bid} value={s.business_system_bid}>{s.name}</option>
-            ))}
-          </select>
-          <Link href={newSystemBid ? `/systems/${newSystemBid}/endpoints/new` : "#"} onClick={(e) => { if (!newSystemBid) e.preventDefault() }} className={`inline-flex items-center rounded-md border px-3 h-9 text-sm ${newSystemBid ? 'border-input text-foreground hover:bg-accent' : 'pointer-events-none opacity-50 border-input text-muted-foreground'}`}>新建</Link>
-        </div>
+        <div className="ml-auto" />
       </div>
 
       <div className="overflow-x-auto rounded-lg border">
@@ -107,4 +100,3 @@ export default function ApisPage() {
     </div>
   )
 }
-
