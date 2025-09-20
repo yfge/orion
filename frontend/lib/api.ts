@@ -200,13 +200,15 @@ export async function validateSchema(payload: { schema: any; data: any }) {
 }
 
 // Send records
-export async function listSendRecords(params?: { limit?: number; offset?: number; message_definition_bid?: string; notification_api_bid?: string; status?: number }) {
+export async function listSendRecords(params?: { limit?: number; offset?: number; message_definition_bid?: string; notification_api_bid?: string; status?: number; start_time?: string; end_time?: string }) {
   const qs = new URLSearchParams()
   if (params?.limit) qs.set("limit", String(params.limit))
   if (params?.offset) qs.set("offset", String(params.offset))
   if (params?.message_definition_bid) qs.set("message_definition_bid", params.message_definition_bid)
   if (params?.notification_api_bid) qs.set("notification_api_bid", params.notification_api_bid)
   if (typeof params?.status === "number") qs.set("status", String(params.status))
+  if (params?.start_time) qs.set("start_time", params.start_time)
+  if (params?.end_time) qs.set("end_time", params.end_time)
   const suffix = qs.toString() ? `?${qs.toString()}` : ""
   return apiFetch(`/api/v1/send-records/${suffix}`)
 }

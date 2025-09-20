@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
+from datetime import datetime
 from sqlalchemy.orm import Session
 
 from ...deps.db import get_db
@@ -21,6 +22,8 @@ def list_send_records(
     message_definition_bid: str | None = Query(default=None),
     notification_api_bid: str | None = Query(default=None),
     status: int | None = Query(default=None),
+    start_time: datetime | None = Query(default=None, description="Filter by send_time >= start_time (ISO8601)"),
+    end_time: datetime | None = Query(default=None, description="Filter by send_time < end_time (ISO8601)"),
 ):
     items, total = repo.list_send_records(
         db,
@@ -29,6 +32,8 @@ def list_send_records(
         message_definition_bid=message_definition_bid,
         notification_api_bid=notification_api_bid,
         status=status,
+        start_time=start_time,
+        end_time=end_time,
     )
     return {"items": items, "total": total, "limit": limit, "offset": offset}
 
@@ -50,4 +55,3 @@ def list_send_details(
 ):
     items, total = repo.list_details_by_record(db, send_record_bid=bid, limit=limit, offset=offset)
     return {"items": items, "total": total, "limit": limit, "offset": offset}
-

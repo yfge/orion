@@ -1,4 +1,5 @@
 from typing import Tuple, Optional
+from datetime import datetime
 
 from sqlalchemy import select, func
 from sqlalchemy.orm import Session
@@ -14,6 +15,8 @@ def list_send_records(
     message_definition_bid: Optional[str] = None,
     notification_api_bid: Optional[str] = None,
     status: Optional[int] = None,
+    start_time: Optional[datetime] = None,
+    end_time: Optional[datetime] = None,
 ) -> Tuple[list[SendRecord], int]:
     base = (
         select(
@@ -43,6 +46,16 @@ def list_send_records(
         base = base.where(SendRecord.notification_api_bid == notification_api_bid)
     if status is not None:
         base = base.where(SendRecord.status == status)
+    if start_time is not None:
+        base = base.where(SendRecord.send_time >= start_time)
+    if end_time is not None:
+        base = base.where(SendRecord.send_time < end_time)
+    # time range filters (by send_time)
+    # Use naive datetimes as-is (DB default timezone). Callers should pass UTC or DB-local consistently.
+    # We treat None as open-ended.
+    # Note: if send_time is NULL, it will be excluded by these filters.
+    # This is acceptable for dashboard queries.
+    
 
     rows = db.execute(
         base.order_by(SendRecord.id.desc()).limit(limit).offset(offset)
@@ -61,6 +74,11 @@ def list_send_records(
         count_q = count_q.where(SendRecord.notification_api_bid == notification_api_bid)
     if status is not None:
         count_q = count_q.where(SendRecord.status == status)
+    if start_time is not None:
+        count_q = count_q.where(SendRecord.send_time >= start_time)
+    if end_time is not None:
+        count_q = count_q.where(SendRecord.send_time < end_time)
+    
     total = int(db.execute(count_q).scalar_one())
     return items, total
 
@@ -128,4 +146,3 @@ def list_details_by_record(
         ).scalar_one()
     )
     return items, total
-
