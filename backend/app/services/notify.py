@@ -10,6 +10,7 @@ from ..repository import dispatches as disp_repo
 from ..repository import endpoints as ep_repo
 from .templating import render_value
 from .sender.http_sender import HttpSender
+from .sender.smtp_sender import SmtpSender
 from ..db.models import SendRecord, SendDetail, MessageDefinition
 
 
@@ -34,6 +35,7 @@ def _notify(db: Session, *, message: MessageDefinition, schema: dict[str, Any], 
     dispatches, _ = disp_repo.list_by_message(db, message_bid=message.message_definition_bid, limit=1000, offset=0)
     results: list[dict[str, Any]] = []
     http_sender = HttpSender()
+    smtp_sender = SmtpSender()
     for d in dispatches:
         if not d.enabled:
             continue
@@ -49,9 +51,9 @@ def _notify(db: Session, *, message: MessageDefinition, schema: dict[str, Any], 
         db.add(send_record)
         db.flush()
         endpoint_dict = {
-            "adapter_key": ep.adapter_key or "http.generic",
+            "adapter_key": ep.adapter_key or ("smtp.generic" if (ep.transport or "").lower() == "smtp" else "http.generic"),
             "endpoint_url": ep.endpoint_url,
-            "config": (ep.config or {}) | {"url": ep.endpoint_url},
+            "config": (ep.config or {}) | ({"url": ep.endpoint_url} if (ep.transport or "").lower() != "smtp" else {}),
             "auth_type": None,
             "auth_config": None,
         }
@@ -67,7 +69,10 @@ def _notify(db: Session, *, message: MessageDefinition, schema: dict[str, Any], 
             payload = {"msg_type": "text", "content": {"text": str(render_value("${text}", data))}}
 
         try:
-            res = http_sender.send(endpoint=endpoint_dict, payload=payload)
+            if (ep.transport or "").lower() == "smtp" or (ep.adapter_key or "").lower().startswith("smtp."):
+                res = smtp_sender.send(endpoint=endpoint_dict, payload=payload)
+            else:
+                res = http_sender.send(endpoint=endpoint_dict, payload=payload)
             body = res.get("body")
             if isinstance(body, str):
                 result_body: Any = {"raw": body}
