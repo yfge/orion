@@ -7,6 +7,8 @@ import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { getEndpoint, updateEndpoint, deleteEndpoint, listAuthProfiles, sendTestToEndpoint, listDispatchesByEndpoint, listMessageDefs, createDispatchForEndpoint, deleteDispatch } from "@/lib/api"
+import { endpointConfigSchemaFor } from "@/lib/schemas"
+import { RjsfForm } from "@/components/jsonschema/RjsfForm"
 
 export default function EditEndpointPage() {
   const params = useParams<{ bid: string; endpointBid: string }>()
@@ -19,6 +21,7 @@ export default function EditEndpointPage() {
   const [adapterKey, setAdapterKey] = useState("")
   const [endpointUrl, setEndpointUrl] = useState("")
   const [configText, setConfigText] = useState("{}")
+  const [configObj, setConfigObj] = useState<any>({})
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [authProfiles, setAuthProfiles] = useState<any[]>([])
@@ -39,7 +42,9 @@ export default function EditEndpointPage() {
         setTransport(data.transport || "")
         setAdapterKey(data.adapter_key || "")
         setEndpointUrl(data.endpoint_url || "")
-        setConfigText(JSON.stringify(data.config || {}, null, 2))
+        const cfgObj = data.config || {}
+        setConfigText(JSON.stringify(cfgObj, null, 2))
+        setConfigObj(cfgObj)
         setAuthProfileBid(data.auth_profile_bid || "")
       } catch (err: any) {
         setError(err.message || "加载失败")
@@ -73,7 +78,7 @@ export default function EditEndpointPage() {
     setError(null)
     setLoading(true)
     try {
-      const cfg = configText ? JSON.parse(configText) : null
+      const cfg = configObj ?? (configText ? JSON.parse(configText) : null)
       await updateEndpoint(endpointBid, {
         name,
         transport,
@@ -164,8 +169,12 @@ export default function EditEndpointPage() {
           </select>
         </div>
         <div className="space-y-1">
-          <Label htmlFor="config">配置 JSON</Label>
-          <Textarea id="config" value={configText} onChange={(e) => setConfigText(e.target.value)} className="font-mono" />
+          <Label>配置（基于适配器 Schema）</Label>
+          <RjsfForm schema={endpointConfigSchemaFor(adapterKey)} formData={configObj} onChange={(val) => { setConfigObj(val); setConfigText(JSON.stringify(val ?? {}, null, 2)) }} />
+          <div className="space-y-1 mt-2">
+            <Label htmlFor="config">高级模式：配置 JSON</Label>
+            <Textarea id="config" value={configText} onChange={(e) => { setConfigText(e.target.value); try { setConfigObj(JSON.parse(e.target.value || '{}')) } catch {} }} className="font-mono" />
+          </div>
         </div>
         <div className="space-y-3">
           <h2 className="text-lg font-medium">派发映射（Endpoint ← Message）</h2>

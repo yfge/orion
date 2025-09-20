@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { JsonSchemaForm } from "@/components/jsonschema/Form"
+import { RjsfForm } from "@/components/jsonschema/RjsfForm"
 import { getMessageDef, updateMessageDef, deleteMessageDef, listAllEndpoints, listDispatches, createDispatch, updateDispatch, deleteDispatch, validateSchema } from "@/lib/api"
 
 export default function EditMessagePage() {
@@ -137,8 +137,8 @@ export default function EditMessagePage() {
           <Textarea id="schema" className="font-mono" value={schemaText} onChange={(e) => setSchemaText(e.target.value)} />
         </div>
         <div className="space-y-2">
-          <Label>Schema 预览表单（基础类型）</Label>
-          <JsonSchemaForm schema={safeParse(schemaText)} value={previewValue} onChange={setPreviewValue} />
+          <Label>Schema 预览表单（RJSF）</Label>
+          <RjsfForm schema={safeParse(schemaText)} formData={previewValue} onChange={setPreviewValue} />
         </div>
         <div className="space-y-1">
           <Label htmlFor="sample">示例数据（用于校验）</Label>
