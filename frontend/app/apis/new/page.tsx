@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -70,6 +71,13 @@ export default function NewApiPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">新建通知 API</h1>
       </div>
+      {systems.length === 0 && (
+        <div className="rounded-md border p-3 text-sm text-muted-foreground">
+          未找到业务系统，请先
+          <Link href="/systems/new" className="text-primary hover:underline ml-1">新建业务系统</Link>
+          ，再回来创建通知 API。
+        </div>
+      )}
       <form onSubmit={onSubmit} className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-1">
@@ -158,4 +166,3 @@ export default function NewApiPage() {
     </div>
   )
 }
-

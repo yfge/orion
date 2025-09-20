@@ -47,6 +47,13 @@ export default function ApisPage() {
         <h1 className="text-2xl font-semibold">通知 API</h1>
         <Link href="/apis/new" className="inline-flex items-center rounded-md border px-3 h-9 text-sm border-input text-foreground hover:bg-accent">新建</Link>
       </div>
+      {items.length === 0 && (
+        <div className="rounded-md border p-3 text-sm text-muted-foreground">
+          暂无通知 API。您可以先
+          <Link href="/systems/new" className="text-primary hover:underline ml-1">新建业务系统</Link>
+          ，然后在“新建通知 API”页面选择该系统创建端点。
+        </div>
+      )}
 
       <div className="flex flex-wrap items-center gap-2">
         <Input placeholder="按名称搜索" value={q} onChange={(e) => setQ(e.target.value)} className="w-64" />
