@@ -33,6 +33,10 @@ class HttpSender(MessageSender):
             token = base64.b64encode(f"{basic['username']}:{basic['password']}".encode()).decode()
             headers.setdefault("Authorization", f"Basic {token}")
 
+        # SendGrid convenience: Bearer token via config.api_key
+        if adapter_key.startswith("http.sendgrid") and cfg.get("api_key"):
+            headers.setdefault("Authorization", f"Bearer {cfg.get('api_key')}")
+
         req_desc = {
             "method": method,
             "url": url,

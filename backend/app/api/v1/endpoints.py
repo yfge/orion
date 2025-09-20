@@ -154,6 +154,18 @@ def send_test(endpoint_bid: str, payload: SendTestRequest, db: Session = Depends
             "subject": "Orion Test",
             "text": payload.text,
         }
+    elif (obj.adapter_key or "").lower().startswith("http.sendgrid"):
+        cfg = obj.config or {}
+        to = cfg.get("to")
+        if not to:
+            raise HTTPException(status_code=400, detail="SendGrid send-test requires 'to' in endpoint config")
+        from_addr = cfg.get("from") or "orion@example.com"
+        msg = {
+            "personalizations": [{"to": [{"email": to}] }],
+            "from": {"email": from_addr},
+            "subject": "Orion Test",
+            "content": [{"type": "text/plain", "value": payload.text}],
+        }
     else:
         msg = {"text": payload.text}
 
