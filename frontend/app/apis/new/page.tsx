@@ -13,6 +13,7 @@ import { RjsfForm } from "@/components/jsonschema/RjsfForm"
 
 export default function NewApiPage() {
   const router = useRouter()
+  const [mounted, setMounted] = useState(false)
   const [systems, setSystems] = useState<any[]>([])
   const [systemBid, setSystemBid] = useState("")
   const [name, setName] = useState("")
@@ -28,6 +29,7 @@ export default function NewApiPage() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    setMounted(true)
     ;(async () => {
       try {
         const s = await listSystems({ limit: 500, offset: 0 })
@@ -65,6 +67,10 @@ export default function NewApiPage() {
   }
 
   const configSchema = endpointConfigSchemaFor(adapterKey)
+
+  if (!mounted) {
+    return <div className="container max-w-2xl">加载中...</div>
+  }
 
   return (
     <div className="container max-w-2xl space-y-4">

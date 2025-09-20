@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 
 export default function ApisPage() {
+  const [mounted, setMounted] = useState(false)
   const [q, setQ] = useState("")
   const [items, setItems] = useState<any[]>([])
   const [total, setTotal] = useState(0)
@@ -28,6 +29,7 @@ export default function ApisPage() {
   }
 
   useEffect(() => {
+    setMounted(true)
     load()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [offset])
@@ -40,6 +42,10 @@ export default function ApisPage() {
       } catch {}
     })()
   }, [])
+
+  if (!mounted) {
+    return <div className="container">加载中...</div>
+  }
 
   return (
     <div className="space-y-4">
