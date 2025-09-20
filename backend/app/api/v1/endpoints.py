@@ -138,10 +138,22 @@ def send_test(endpoint_bid: str, payload: SendTestRequest, db: Session = Depends
         "auth_type": None,
         "auth_config": None,
     }
-    # Build payload for Feishu bot if applicable
+    # Build payload for Feishu/Mailgun if applicable
     msg: dict
     if (obj.adapter_key or "").startswith("http.feishu"):
         msg = {"msg_type": "text", "content": {"text": payload.text}}
+    elif (obj.adapter_key or "").lower().startswith("http.mailgun"):
+        cfg = obj.config or {}
+        to = cfg.get("to")
+        if not to:
+            raise HTTPException(status_code=400, detail="Mailgun send-test requires 'to' in endpoint config")
+        from_addr = cfg.get("from") or "orion@example.com"
+        msg = {
+            "from": from_addr,
+            "to": to,
+            "subject": "Orion Test",
+            "text": payload.text,
+        }
     else:
         msg = {"text": payload.text}
 

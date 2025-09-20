@@ -27,6 +27,8 @@ export function endpointConfigSchemaFor(adapterKey?: string | null) {
       properties: {
         url: { type: "string", title: "API URL", description: "如 https://api.mailgun.net/v3/<domain>/messages" },
         api_key: { type: "string", title: "API Key" },
+        from: { type: "string", title: "默认发件人(可选)" },
+        to: { type: "string", title: "默认收件人(逗号分隔，可选)" },
         timeout: { type: "number", title: "超时(秒)" },
         headers: { type: "object", title: "额外请求头(可选)" },
         body_format: { type: "string", enum: ["form", "json"], title: "Body 格式", default: "form" },

@@ -112,12 +112,13 @@ export default function NewApiPage() {
           <div className="space-y-1">
             <Label htmlFor="adapter">适配器</Label>
             <select id="adapter" className="border rounded-md h-9 px-3 text-sm w-full" value={adapterKey} onChange={(e) => setAdapterKey(e.target.value)}>
-              {transport === 'http' ? (
-                <>
-                  <option value="http.generic">http.generic</option>
-                  <option value="http.feishu_bot">http.feishu_bot</option>
-                </>
-              ) : (
+            {transport === 'http' ? (
+              <>
+                <option value="http.generic">http.generic</option>
+                <option value="http.feishu_bot">http.feishu_bot</option>
+                <option value="http.mailgun">http.mailgun</option>
+              </>
+            ) : (
                 <>
                   <option value="mq.kafka">mq.kafka</option>
                   <option value="mq.rabbit">mq.rabbit</option>
