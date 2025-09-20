@@ -21,6 +21,19 @@ export function endpointConfigSchemaFor(adapterKey?: string | null) {
       required: ["url"],
     }
   }
+  if (adapterKey === "http.mailgun") {
+    return {
+      type: "object",
+      properties: {
+        url: { type: "string", title: "API URL", description: "如 https://api.mailgun.net/v3/<domain>/messages" },
+        api_key: { type: "string", title: "API Key" },
+        timeout: { type: "number", title: "超时(秒)" },
+        headers: { type: "object", title: "额外请求头(可选)" },
+        body_format: { type: "string", enum: ["form", "json"], title: "Body 格式", default: "form" },
+      },
+      required: ["url", "api_key"],
+    }
+  }
   return baseHttp
 }
 
@@ -33,6 +46,17 @@ export function mappingSchemaFor(adapterKey?: string | null, messageType?: strin
       },
     }
   }
+  if (adapterKey === "http.mailgun") {
+    return {
+      type: "object",
+      properties: {
+        from: { type: "string", title: "发件人(可选)" },
+        to: { type: "string", title: "收件人(逗号分隔，可选)" },
+        subject: { type: "string", title: "主题(可选)" },
+        text: { type: "string", title: "纯文本正文(可选)" },
+        html: { type: "string", title: "HTML 正文(可选)", format: "textarea" },
+      },
+    }
+  }
   return { type: "object", properties: {} }
 }
-
