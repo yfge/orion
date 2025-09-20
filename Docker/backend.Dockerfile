@@ -26,5 +26,6 @@ ENV ORION_DATABASE_URL="sqlite:///./orion.db" \
     ORION_CORS_ORIGINS="*"
 
 # Run migrations then start API
-CMD sh -c "alembic upgrade head && uvicorn backend.app.main:app --host 0.0.0.0 --port 8000"
-
+# Use the alembic.ini in this directory and correct script_location
+ENV ALEMBIC_CONFIG=alembic.ini
+CMD sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"

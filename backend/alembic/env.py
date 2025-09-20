@@ -5,15 +5,23 @@ from logging.config import fileConfig
 from sqlalchemy import engine_from_config, pool
 from alembic import context
 
-# Add project root to sys.path so we can import app modules when running from repo root
-BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-if BASE_DIR not in sys.path:
-    sys.path.insert(0, BASE_DIR)
+# Adjust sys.path for both dev (repo root) and installed package (container)
+ALEMBIC_DIR = os.path.abspath(os.path.dirname(__file__))
+BACKEND_DIR = os.path.abspath(os.path.join(ALEMBIC_DIR, ".."))  # .../backend
+PROJECT_ROOT = os.path.abspath(os.path.join(BACKEND_DIR, ".."))  # .../
+for p in (PROJECT_ROOT, BACKEND_DIR):
+    if p not in sys.path:
+        sys.path.insert(0, p)
 
-from backend.app.core.config import settings  # noqa: E402
-from backend.app.db.base import Base  # noqa: E402
-# Ensure models are imported so metadata is populated for autogenerate
-from backend.app.db import models as _models  # noqa: F401,E402
+# Import settings and metadata; support both 'backend.app.*' (dev) and 'app.*' (installed)
+try:  # dev path
+    from backend.app.core.config import settings  # type: ignore
+    from backend.app.db.base import Base  # type: ignore
+    from backend.app.db import models as _models  # noqa: F401
+except ModuleNotFoundError:  # installed package path
+    from app.core.config import settings  # type: ignore
+    from app.db.base import Base  # type: ignore
+    from app.db import models as _models  # noqa: F401
 
 
 # this is the Alembic Config object, which provides
