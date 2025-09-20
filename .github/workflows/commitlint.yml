@@ -1,0 +1,36 @@
+name: Commitlint
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited]
+  push:
+    branches: [ main ]
+
+jobs:
+  commitlint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Commitlint
+        run: npm install --no-save @commitlint/cli @commitlint/config-conventional
+
+      - name: Lint commits (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        run: |
+          npx commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.sha }}
+
+      - name: Lint last commits (push)
+        if: ${{ github.event_name == 'push' }}
+        run: |
+          # Lint last 20 commits on push to main
+          npx commitlint --from HEAD~20 --to HEAD
+

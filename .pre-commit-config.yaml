@@ -38,6 +38,14 @@ repos:
       - id: isort
         args: ["--profile=black"]
 
+  - repo: local
+    hooks:
+      - id: commitlint
+        name: commitlint (Conventional Commits, English)
+        entry: bash -lc 'npx --yes @commitlint/cli@19.3.0 --edit ${1}'
+        language: system
+        stages: [commit-msg]
+
   # Enable later when frontend scaffolds exist (requires Node)
   - repo: https://github.com/pre-commit/mirrors-prettier
     rev: v3.1.0
