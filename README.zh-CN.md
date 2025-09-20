@@ -52,6 +52,34 @@ Orion 是一个面向企业场景的统一通知网关：接收业务系统的�
 - 启动：`npm run dev`，浏览器访问 http://localhost:3000
 - 操作：系统/端点/消息管理；在消息或端点页面配置映射
 
+## 使用 Docker 一键启动
+- 预置要求：已安装 Docker Desktop（含 Compose）。
+- 启动（首次建议构建镜像）：
+  - 构建镜像：`docker compose build`
+  - 后台运行：`docker compose up -d`
+  - 查看状态：`docker compose ps`
+  - 查看日志：`docker compose logs -f --tail=200 backend`（或 `frontend`/`mysql`/`nginx`）
+
+### 访问地址
+- 控制台（Nginx 统一入口）：http://localhost:8080
+- 后端 API 入口（经 Nginx 反代）：http://localhost:8080/api/
+- 健康检查：`/healthz` 或 `/api/v1/ping`
+
+### Compose 服务说明（简要）
+- `mysql`：MySQL 8（账号 `orion`/`orionpass`，库 `orion`，root 密码 `orionroot`），数据挂载到卷 `mysql_data`。
+- `backend`：FastAPI 应用，自动执行 Alembic 迁移（`alembic upgrade head`），再启动 Uvicorn。
+  - 关键环境：`ORION_DATABASE_URL=mysql+pymysql://orion:orionpass@mysql:3306/orion?charset=utf8mb4`、`ORION_PUBLIC_API_KEY` 等。
+- `frontend`：Next.js 控制台，构建与运行阶段均注入 `NEXT_PUBLIC_API_BASE_URL=http://nginx`。
+- `nginx`：反向代理 `/` 到前端，`/api/` 到后端。
+
+### 常见问题
+- 初次启动 MySQL 需要时间初始化，若后端迁移时数据库尚未就绪可重试：`docker compose restart backend`。
+- Compose 关于 `version` 的提示为警告，可忽略；计划后续清理。
+- 若需覆盖前端 API 基础地址：在 `docker-compose.yml` 的 `frontend.build.args` 与 `frontend.environment` 同步修改 `NEXT_PUBLIC_API_BASE_URL`。
+
+### 为什么不做“单镜像”？
+- 可用于体验，但不推荐生产：前后端生命周期不同、资源与扩缩容策略不同，多镜像更利于独立发布与伸缩。当前已提供一键编排（Nginx + Backend + Frontend + MySQL），满足快速部署与演示需求。
+
 ## 测试
 - 安装：`pip install -e backend[test]`
 - 运行（在 backend/）：`pytest`

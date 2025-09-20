@@ -56,6 +56,34 @@ This repo demonstrates an ai-coding & vibe-coding workflow — documentation-fir
 - Run: `npm run dev` and open http://localhost:3000
 - Navigate to Systems, Endpoints, Messages; create mappings in Messages or Endpoints pages
 
+## Docker (one‑command bring‑up)
+- Prereqs: Docker Desktop with Compose.
+- Start (first time build recommended):
+  - Build images: `docker compose build`
+  - Run in background: `docker compose up -d`
+  - Check status: `docker compose ps`
+  - Tail logs: `docker compose logs -f --tail=200 backend` (or `frontend`/`mysql`/`nginx`)
+
+### Endpoints
+- Console (Nginx entry): http://localhost:8080
+- API (proxied by Nginx): http://localhost:8080/api/
+- Health: `/healthz` or `/api/v1/ping`
+
+### Services (brief)
+- `mysql`: MySQL 8 with `orion/orionpass`, DB `orion`, root `orionroot`; data persists via volume `mysql_data`.
+- `backend`: FastAPI service. Runs `alembic upgrade head` then serves via Uvicorn.
+  - Key envs: `ORION_DATABASE_URL=mysql+pymysql://orion:orionpass@mysql:3306/orion?charset=utf8mb4`, `ORION_PUBLIC_API_KEY`, etc.
+- `frontend`: Next.js console. `NEXT_PUBLIC_API_BASE_URL=http://nginx` injected at build and runtime.
+- `nginx`: reverse proxies `/` to frontend and `/api/` to backend.
+
+### Troubleshooting
+- MySQL may take a moment on first start. If backend migrates too early, run `docker compose restart backend`.
+- Compose warns about `version` field deprecation: it’s safe to ignore; we’ll clean this later.
+- To override the frontend API base URL, edit `docker-compose.yml` and set `NEXT_PUBLIC_API_BASE_URL` in both `frontend.build.args` and `frontend.environment`.
+
+### Why not a “single image”?
+- Possible for demos, but not recommended for production: tight coupling, heavier image, harder rollouts and scaling. Multi‑image (frontend/backend/nginx/db) offers independent deploy and scaling. Current compose provides an ergonomic one‑command experience.
+
 ## Tests
 - Install: `pip install -e backend[test]`
 - Run in `backend/`: `pytest`
