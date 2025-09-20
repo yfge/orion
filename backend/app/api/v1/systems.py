@@ -33,7 +33,7 @@ def create_system(payload: BusinessSystemCreate, db: Session = Depends(get_db)):
 @router.get("/", response_model=BusinessSystemList)
 def list_systems(
     db: Session = Depends(get_db),
-    limit: int = Query(50, ge=1, le=200),
+    limit: int = Query(50, ge=1, le=1000),
     offset: int = Query(0, ge=0),
     q: str | None = Query(default=None, description="Search by name"),
 ):
@@ -75,4 +75,3 @@ def delete_system(bid: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Business system not found")
     db.commit()
     return None
-

@@ -37,7 +37,7 @@ export default function ApisPage() {
   useEffect(() => {
     ;(async () => {
       try {
-        const s = await listSystems({ limit: 500, offset: 0 })
+        const s = await listSystems({ limit: 200, offset: 0 })
         setSystems(s.items || [])
       } catch {}
     })()
