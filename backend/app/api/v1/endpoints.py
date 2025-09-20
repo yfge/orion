@@ -5,6 +5,7 @@ from ...deps.db import get_db
 from ...repository import endpoints as repo
 from ...schemas.endpoints import EndpointCreate, EndpointList, EndpointOut, EndpointUpdate, SendTestRequest, SendTestResponse
 from ...services.sender.http_sender import HttpSender
+from ...services.sender.smtp_sender import SmtpSender
 from ...repository import endpoints as repo
 from ...repository import dispatches as dispatch_repo
 from ...schemas.dispatches import DispatchCreate, DispatchList, DispatchOut, DispatchUpdate, EndpointDispatchCreate
@@ -128,8 +129,8 @@ def send_test(endpoint_bid: str, payload: SendTestRequest, db: Session = Depends
     obj = repo.get_by_bid(db, endpoint_bid)
     if not obj:
         raise HTTPException(status_code=404, detail="Endpoint not found")
-    if (obj.transport or "http") != "http":
-        raise HTTPException(status_code=400, detail="Only HTTP endpoints support send-test")
+    if (obj.transport or "http").lower() not in ("http", "smtp"):
+        raise HTTPException(status_code=400, detail="Only HTTP/SMTP endpoints support send-test")
 
     endpoint_dict = {
         "adapter_key": obj.adapter_key or "http.generic",
@@ -166,10 +167,26 @@ def send_test(endpoint_bid: str, payload: SendTestRequest, db: Session = Depends
             "subject": "Orion Test",
             "content": [{"type": "text/plain", "value": payload.text}],
         }
+    elif (obj.transport or "").lower() == "smtp" or (obj.adapter_key or "").lower().startswith("smtp."):
+        cfg = obj.config or {}
+        to = cfg.get("to")
+        if not to:
+            raise HTTPException(status_code=400, detail="SMTP send-test requires 'to' in endpoint config")
+        from_addr = cfg.get("from") or "orion@example.com"
+        msg = {
+            "from": from_addr,
+            "to": to,
+            "subject": "Orion Test",
+            "text": payload.text,
+        }
     else:
         msg = {"text": payload.text}
 
-    sender = HttpSender()
+    # Choose sender based on adapter/transport
+    if (obj.transport or "").lower() == "smtp" or (obj.adapter_key or "").lower().startswith("smtp."):
+        sender = SmtpSender()
+    else:
+        sender = HttpSender()
     try:
         result = sender.send(endpoint=endpoint_dict, payload=msg)
         return SendTestResponse(status_code=int(result.get("status_code", 0)), body=result.get("body"))
