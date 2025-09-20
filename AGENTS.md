@@ -27,6 +27,16 @@ Backend architecture (FastAPI, Python 3.11)
 - State model: persist full notification lifecycle (pending/sending/success/failed/retrying/abandoned) with auditable events.
 - Resilience: idempotency keys, exponential backoff, rate limiting, circuit breakers; differentiate vendor 4xx vs 5xx.
 
+Repository layout
+- Root directories (current):
+  - `backend/` — FastAPI app, SQLAlchemy, Alembic, tests.
+  - `frontend/` — Next.js app with Tailwind + ShadCN.
+  - `docs/` — documentation and guides.
+  - `Docker/` — containerization setup.
+  - `scripts/` — local helper scripts (e.g., migrations).
+  - `agents_chat/` — AI collaboration logs (see policy below).
+  - Symlinked agent rule files → `AGENTS.md`: `.CLAUDE.md`, `GEMINI.md`, `.cursorrules`, `.github/instructions/agents.instructions.md`.
+
 Frontend (Next.js + Tailwind + ShadCN)
 - Layout suggestion: `frontend/app/`, `frontend/components/`, `frontend/lib/` (API SDK/utils).
 - Features: channel configuration, templates, send history and search, alerts, retries.
@@ -43,7 +53,11 @@ Coding style and tooling
 - Run pre-commit before pushing. Use Conventional Commits.
 
 Commits and branches
-- Examples: `feat(adapter): add feishu message sender`, `fix(api): correct webhook signature validation`, `chore: bump pre-commit hooks`.
+- Commit messages MUST be in English and follow Conventional Commits.
+  - Style: imperative mood, present tense, concise; max 72-char subject.
+  - Types: `feat`, `fix`, `docs`, `chore`, `refactor`, `test`, `build`, `ci`, etc.
+  - Scope: use meaningful scopes (e.g., `backend`, `frontend`, `agents`, `records`).
+  - Examples: `feat(adapter): add Feishu message sender`, `fix(api): validate X-API-Key in notify`, `docs(readme): update Notify API usage`, `chore(precommit): bump hook versions`.
 - Branching (suggested): protected `main`; feature branches `feat/*`, fixes `fix/*`; merge via CI.
 
 Security and secrets
@@ -73,6 +87,6 @@ AI session logging (agents_chat)
   - Outcome and impact: feature/API/tests/docs status and usability.
   - Next steps (TODO): follow-ups, risks, validation points.
   - Linked commits/PRs: list commit messages or PR links when available.
-- Frequency: Every significant commit (or commit group) must be paired with an agents_chat entry; split long sessions by day.
+- Frequency: Every significant commit (or small group of related commits) MUST be paired with an agents_chat entry; split long sessions by day. Trivial formatting-only commits can be batched under the nearest related entry.
 - Language: Chinese is preferred for this repo; English mirror optional. Consistency matters more than perfection.
 - Privacy: never include secrets; always redact tokens/keys.
