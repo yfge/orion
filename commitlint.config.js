@@ -7,6 +7,7 @@ module.exports = {
     ]],
     // Reasonable defaults
     'subject-empty': [2, 'never'],
-    'header-max-length': [2, 'always', 72],
+    // Allow slightly longer subjects for clarity
+    'header-max-length': [2, 'always', 100],
   },
 }
