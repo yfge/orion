@@ -13,12 +13,15 @@ def _sha256_hex(s: str) -> str:
     return hashlib.sha256(s.encode("utf-8")).hexdigest()
 
 
-def create_api_key(db: Session, *, name: str, description: str | None = None) -> tuple[ApiKey, str]:
+def create_api_key(
+    db: Session, *, owner_user_bid: str, name: str, description: str | None = None
+) -> tuple[ApiKey, str]:
     token = secrets.token_urlsafe(32)
     token_hash = _sha256_hex(token)
     prefix = token[:8]
     suffix = token[-6:]
     obj = ApiKey(
+        owner_user_bid=owner_user_bid,
         name=name,
         token_hash=token_hash,
         prefix=prefix,
@@ -32,9 +35,9 @@ def create_api_key(db: Session, *, name: str, description: str | None = None) ->
 
 
 def list_api_keys(
-    db: Session, *, limit: int = 50, offset: int = 0, q: str | None = None
+    db: Session, *, owner_user_bid: str, limit: int = 50, offset: int = 0, q: str | None = None
 ) -> tuple[list[ApiKey], int]:
-    query = db.query(ApiKey).filter(~ApiKey.is_deleted)
+    query = db.query(ApiKey).filter(~ApiKey.is_deleted, ApiKey.owner_user_bid == owner_user_bid)
     if q:
         like = f"%{q}%"
         query = query.filter(or_(ApiKey.name.ilike(like)))
@@ -43,8 +46,16 @@ def list_api_keys(
     return items, total
 
 
-def soft_delete_by_bid(db: Session, api_key_bid: str) -> bool:
-    obj = db.query(ApiKey).filter(ApiKey.api_key_bid == api_key_bid, ~ApiKey.is_deleted).first()
+def soft_delete_by_bid(db: Session, *, owner_user_bid: str, api_key_bid: str) -> bool:
+    obj = (
+        db.query(ApiKey)
+        .filter(
+            ApiKey.api_key_bid == api_key_bid,
+            ApiKey.owner_user_bid == owner_user_bid,
+            ~ApiKey.is_deleted,
+        )
+        .first()
+    )
     if not obj:
         return False
     obj.is_deleted = True
@@ -68,11 +79,20 @@ def update_by_bid(
     db: Session,
     api_key_bid: str,
     *,
+    owner_user_bid: str,
     name: str | None = None,
     description: str | None = None,
     status: int | None = None,
 ) -> ApiKey | None:
-    obj = db.query(ApiKey).filter(ApiKey.api_key_bid == api_key_bid, ~ApiKey.is_deleted).first()
+    obj = (
+        db.query(ApiKey)
+        .filter(
+            ApiKey.api_key_bid == api_key_bid,
+            ApiKey.owner_user_bid == owner_user_bid,
+            ~ApiKey.is_deleted,
+        )
+        .first()
+    )
     if not obj:
         return None
     if name is not None:

@@ -196,6 +196,7 @@ class ApiKey(Base, BaseFieldsMixin):
     api_key_bid: Mapped[str] = mapped_column(
         String(32), unique=True, index=True, default=gen_bid, nullable=False
     )
+    owner_user_bid: Mapped[str] = mapped_column(String(32), index=True, nullable=False)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     token_hash: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)  # sha256 hex
     prefix: Mapped[str | None] = mapped_column(
