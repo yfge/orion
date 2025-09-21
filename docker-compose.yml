@@ -32,10 +32,10 @@ services:
       context: .
       dockerfile: Docker/frontend.Dockerfile
       args:
-        NEXT_PUBLIC_API_BASE_URL: http://nginx
+        INTERNAL_API_BASE_URL: http://backend:8000
     environment:
-      # For SSR fetches and runtime (also passed at build via args)
-      NEXT_PUBLIC_API_BASE_URL: http://nginx
+      # SSR fetches use internal service URL; browser uses same-origin via Nginx
+      INTERNAL_API_BASE_URL: http://backend:8000
     depends_on:
       - backend
     restart: unless-stopped

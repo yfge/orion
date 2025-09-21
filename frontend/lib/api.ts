@@ -1,4 +1,6 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8000"
+const isBrowser = typeof window !== 'undefined'
+// In browser, hit same-origin (Nginx proxies /api). In SSR, use internal service URL.
+const API_BASE = isBrowser ? '' : (process.env.INTERNAL_API_BASE_URL || process.env.NEXT_PUBLIC_API_BASE_URL || 'http://backend:8000')
 
 export function getToken(): string | null {
   if (typeof window === "undefined") return null
