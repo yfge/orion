@@ -17,7 +17,7 @@ import {
   createDispatchForEndpoint,
   deleteDispatch,
 } from "@/lib/api";
-import { endpointConfigSchemaFor } from "@/lib/schemas";
+import { endpointConfigSchemaFor, mappingSchemaFor } from "@/lib/schemas";
 import { RjsfForm } from "@/components/jsonschema/RjsfForm";
 
 export default function EditEndpointPage() {
@@ -42,6 +42,7 @@ export default function EditEndpointPage() {
   const [endpointDispatches, setEndpointDispatches] = useState<any[]>([]);
   const [newMsgBid, setNewMsgBid] = useState("");
   const [newMappingText, setNewMappingText] = useState("{}");
+  const [newMappingObj, setNewMappingObj] = useState<any>({});
   const [newEnabled, setNewEnabled] = useState(true);
 
   useEffect(() => {
@@ -134,7 +135,8 @@ export default function EditEndpointPage() {
 
   const onAddDispatch = async () => {
     try {
-      const mapping = newMappingText ? JSON.parse(newMappingText) : null;
+      const mapping =
+        newMappingObj ?? (newMappingText ? JSON.parse(newMappingText) : null);
       await createDispatchForEndpoint(endpointBid, {
         message_definition_bid: newMsgBid,
         mapping,
@@ -144,6 +146,7 @@ export default function EditEndpointPage() {
       setEndpointDispatches(dps.items || []);
       setNewMsgBid("");
       setNewMappingText("{}");
+      setNewMappingObj({});
       setNewEnabled(true);
     } catch (e: any) {
       alert(e.message || "新增映射失败");
@@ -303,14 +306,44 @@ export default function EditEndpointPage() {
                 </select>
               </div>
             </div>
-            <div className="space-y-1">
-              <Label htmlFor="mapping2">Mapping JSON（可选）</Label>
-              <Textarea
-                id="mapping2"
-                className="font-mono"
-                value={newMappingText}
-                onChange={(e) => setNewMappingText(e.target.value)}
+            <div className="space-y-2">
+              <Label>映射（Schema 表单，可选）</Label>
+              <RjsfForm
+                schema={mappingSchemaFor(
+                  adapterKey,
+                  messageDefs.find(
+                    (m: any) => m.message_definition_bid === newMsgBid,
+                  )?.type || null,
+                )}
+                formData={newMappingObj}
+                onChange={(val) => {
+                  setNewMappingObj(val);
+                  setNewMappingText(JSON.stringify(val ?? {}, null, 2));
+                }}
               />
+              {(adapterKey === "http.mailgun" ||
+                adapterKey === "http.sendgrid" ||
+                (typeof adapterKey === "string" &&
+                  adapterKey.startsWith("smtp."))) && (
+                <p className="text-xs text-muted-foreground">
+                  邮件映射可设置
+                  from、to、subject、text、html（如未设置则使用配置或默认值）。
+                </p>
+              )}
+              <div className="space-y-1">
+                <Label htmlFor="mapping2">高级：Mapping JSON（可选）</Label>
+                <Textarea
+                  id="mapping2"
+                  className="font-mono"
+                  value={newMappingText}
+                  onChange={(e) => {
+                    setNewMappingText(e.target.value);
+                    try {
+                      setNewMappingObj(JSON.parse(e.target.value || "{}"));
+                    } catch {}
+                  }}
+                />
+              </div>
             </div>
             <div>
               <Button
