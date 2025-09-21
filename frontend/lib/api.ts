@@ -341,10 +341,12 @@ export async function listSendDetails(
 export async function listApiKeys(params?: {
   limit?: number;
   offset?: number;
+  q?: string;
 }) {
   const qs = new URLSearchParams();
   if (params?.limit) qs.set("limit", String(params.limit));
   if (params?.offset) qs.set("offset", String(params.offset));
+  if (params?.q) qs.set("q", params.q);
   const suffix = qs.toString() ? `?${qs.toString()}` : "";
   return apiFetch(`/api/v1/api-keys/${suffix}`);
 }

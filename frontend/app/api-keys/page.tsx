@@ -27,7 +27,7 @@ export default function ApiKeysPage() {
   const load = async () => {
     setLoading(true);
     try {
-      const res = await listApiKeys({ limit, offset });
+      const res = await listApiKeys({ limit, offset, q: q || undefined });
       setItems(res.items || []);
       setTotal(res.total || 0);
     } catch (e: any) {

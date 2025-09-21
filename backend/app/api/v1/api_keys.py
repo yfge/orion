@@ -16,6 +16,7 @@ router = APIRouter(prefix="/api-keys", tags=["api-keys"])
 
 
 @router.post("/", response_model=ApiKeyCreateResponse, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=ApiKeyCreateResponse, status_code=status.HTTP_201_CREATED)
 def create_api_key(
     payload: ApiKeyCreate,
     db: Session = Depends(get_db),
@@ -35,6 +36,7 @@ def create_api_key(
 
 
 @router.get("/", response_model=ApiKeyList)
+@router.get("", response_model=ApiKeyList)
 def list_api_keys(
     db: Session = Depends(get_db),
     user_bid: str = Depends(get_current_user_bid),
