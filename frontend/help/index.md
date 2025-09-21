@@ -1,11 +1,14 @@
 # 帮助中心
 
-欢迎使用 Orion 通知网关。本帮助汇总了系统的使用方式与最佳实践：
+欢迎使用 Orion 通知网关。本帮助覆盖安装启动、日常配置、开放 API、常见问题与排障等内容。
 
-- [快速开始](quickstart)
-- [Notify API 调用与鉴权](notify)
-- [邮件适配器（Mailgun/SendGrid/SMTP）](email)
-- [API Keys 管理与调用方式](api-keys)
-- [端点与映射（Endpoints & Dispatches）](endpoints)
+- 基础与入门
+  - [快速开始](quickstart)
+  - [端点与映射（Endpoints & Dispatches）](endpoints)
+  - [API Keys 管理与调用方式](api-keys)
+- 开放 API
+  - [Notify API 调用与鉴权](notify)
+- 适配器指南
+  - [邮件适配器（Mailgun/SendGrid/SMTP）](email)
 
-如需更多示例或排障指南，欢迎补充文档或提交问题。
+更多专题可在本目录下以 Markdown 追加；控制台“帮助”会自动收录并展示。
