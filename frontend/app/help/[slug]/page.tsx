@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import Link from "next/link";
-import { simpleMarkdownToHtml } from "@/lib/markdown";
+import { Markdown } from "@/components/Markdown";
 
 export default function HelpArticle({ params }: { params: { slug: string } }) {
   let helpDir = path.join(process.cwd(), "help");
@@ -23,11 +23,9 @@ export default function HelpArticle({ params }: { params: { slug: string } }) {
     );
   }
   const md = fs.readFileSync(file, "utf-8");
-  const html = simpleMarkdownToHtml(md);
   return (
     <div className="container max-w-3xl prose dark:prose-invert">
-      {/* eslint-disable-next-line react/no-danger */}
-      <div dangerouslySetInnerHTML={{ __html: html }} />
+      <Markdown source={md} />
     </div>
   );
 }
