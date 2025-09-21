@@ -23,10 +23,11 @@ function listChangedFiles(hash) {
 }
 
 function needsAgentsChat(files) {
-  // Consider “code changes” only when touching these paths
+  // Consider “code changes” only when touching these paths (exclude tests-only changes)
   const codeTouched = files.some(f => (
-    f.startsWith('backend/') ||
-    f.startsWith('frontend/') ||
+    f.startsWith('backend/app/') ||
+    f.startsWith('frontend/app/') ||
+    f.startsWith('frontend/lib/') ||
     f.startsWith('Docker/') ||
     f === 'docker-compose.yml'
   ))
@@ -40,8 +41,27 @@ const toRef = process.env.COMMIT_RANGE_TO || process.argv[3]
 const range = getRange(fromRef, toRef)
 const commits = listCommits(range)
 
+// Enforce only for commits at or after the introduction of this checker
+let sinceCommit = ''
+try {
+  const out = sh(`git log --diff-filter=A --format=%H -- tools/ci/check-agents-chat.js | tail -n1`)
+  sinceCommit = (out || '').trim()
+} catch (e) {}
+
+function isAfterSince(c) {
+  if (!sinceCommit) return true
+  try {
+    // returns 0 if sinceCommit is ancestor of c (i.e., c is on/after since)
+    execSync(`git merge-base --is-ancestor ${sinceCommit} ${c}`)
+    return true
+  } catch {
+    return false
+  }
+}
+
 let ok = true
 for (const c of commits) {
+  if (!isAfterSince(c)) continue
   const msg = getCommitMessage(c)
   if (/skip agents-chat/i.test(msg)) continue
   const files = listChangedFiles(c)

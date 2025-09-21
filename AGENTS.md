@@ -3,15 +3,18 @@
 This file is the single source of truth for all agent/coding assistants collaborating in this repository.
 
 Agent files policy
+
 - Do not duplicate instructions across agent-specific files.
 - The following files must be symlinks to this file: `.CLAUDE.md`, `GEMINI.md`, `.cursorrules`, `.github/instructions/agents.instructions.md`.
 - Precedence of instructions: system/developer > user > this file > anything else.
 
 Goals
+
 - Orion is a notification gateway: decouple business systems from external channels; ensure reliability, observability, and operability.
 - Demonstrate ai-coding & vibe coding with a documentation-first, auditable engineering process.
 
 Backend architecture (FastAPI, Python 3.11)
+
 - Suggested layout:
   - `backend/app/main.py`: FastAPI app entry, router mount, DI bootstrap.
   - `backend/app/core/`: config, logging, constants, errors, rate/retry policies.
@@ -28,6 +31,7 @@ Backend architecture (FastAPI, Python 3.11)
 - Resilience: idempotency keys, exponential backoff, rate limiting, circuit breakers; differentiate vendor 4xx vs 5xx.
 
 Repository layout
+
 - Root directories (current):
   - `backend/` — FastAPI app, SQLAlchemy, Alembic, tests.
   - `frontend/` — Next.js app with Tailwind + ShadCN.
@@ -38,21 +42,25 @@ Repository layout
   - Symlinked agent rule files → `AGENTS.md`: `.CLAUDE.md`, `GEMINI.md`, `.cursorrules`, `.github/instructions/agents.instructions.md`.
 
 Frontend (Next.js + Tailwind + ShadCN)
+
 - Layout suggestion: `frontend/app/`, `frontend/components/`, `frontend/lib/` (API SDK/utils).
 - Features: channel configuration, templates, send history and search, alerts, retries.
 
 Documentation workflow
+
 - Start with an architecture overview under `docs/architecture/`.
 - Add module design docs as `README.md` in each module folder.
 - Implementations must follow docs; if intent changes, update docs first.
 - Save AI collaboration logs to `agents_chat/` (see below) for traceability.
 
 Coding style and tooling
+
 - Python: ruff (lint) + black (format) + isort (imports, profile=black). Prefer full typing. Separate Pydantic vs ORM models.
 - Frontend: prettier + eslint (configure later).
 - Run pre-commit before pushing. Use Conventional Commits.
 
 Commits and branches
+
 - Commit messages MUST be in English and follow Conventional Commits.
   - Style: imperative mood, present tense, concise; max 72-char subject.
   - Types: `feat`, `fix`, `docs`, `chore`, `refactor`, `test`, `build`, `ci`, etc.
@@ -61,9 +69,11 @@ Commits and branches
 - Branching (suggested): protected `main`; feature branches `feat/*`, fixes `fix/*`; merge via CI.
 
 Security and secrets
+
 - Never commit secrets or tokens. Use environment variables or a secret manager.
 
 AI session logging (agents_chat)
+
 - Importance: This is a vibe-coding project. Agents chat logs are core materials for review and learning; they must be complete, traceable, and reproducible.
 - Directory: Root `agents_chat/`, organized by date folders: `agents_chat/YYYY/MM/DD/`.
 - Filename (REQUIRED): `YYYY-MM-DDTHH-MM-SSZ-<topic>.md` (e.g., `2025-09-19T07-30-03Z-backend-systems-api.md`).
@@ -92,6 +102,9 @@ AI session logging (agents_chat)
 - Privacy: never include secrets; always redact tokens/keys.
 
 CI enforcement (agents_chat coupling)
-- For commits that modify application code (paths: `backend/`, `frontend/`, `Docker/`, or `docker-compose.yml`), the same commit MUST also include at least one file under `agents_chat/` describing the change.
+
+- Scope: Enforced for commits created after the checker was introduced (2025-09-21) to avoid retroactive failures.
+- What counts as code changes: touching `backend/app/`, `frontend/app/`, `frontend/lib/`, `Docker/`, or `docker-compose.yml` in a commit.
+- Requirement: The same commit MUST also include at least one file under `agents_chat/` describing the change.
 - Allowed exceptions (must be intentional): add `skip agents-chat` in the commit body to bypass the check (use sparingly, e.g., merges, hotfix quick-follow, or pure CI/build refactors).
 - The GitHub Actions workflow runs `tools/ci/check-agents-chat.js` on PRs and pushes to enforce this rule.
