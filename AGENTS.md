@@ -90,3 +90,8 @@ AI session logging (agents_chat)
 - Frequency: Every significant commit (or small group of related commits) MUST be paired with an agents_chat entry; split long sessions by day. Trivial formatting-only commits can be batched under the nearest related entry.
 - Language: Chinese is preferred for this repo; English mirror optional. Consistency matters more than perfection.
 - Privacy: never include secrets; always redact tokens/keys.
+
+CI enforcement (agents_chat coupling)
+- For commits that modify application code (paths: `backend/`, `frontend/`, `Docker/`, or `docker-compose.yml`), the same commit MUST also include at least one file under `agents_chat/` describing the change.
+- Allowed exceptions (must be intentional): add `skip agents-chat` in the commit body to bypass the check (use sparingly, e.g., merges, hotfix quick-follow, or pure CI/build refactors).
+- The GitHub Actions workflow runs `tools/ci/check-agents-chat.js` on PRs and pushes to enforce this rule.
