@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Prism theme for code highlighting (via rehype-prism-plus) */
+@import "rehype-prism-plus/css/prism-one-dark.css";
+
 :root {
   --background: 0 0% 100%;
   --foreground: 224 71.4% 4.1%;
@@ -57,7 +60,10 @@ body {
 
 /* Prism code block fine-tuning within prose */
 .prose pre {
-  @apply rounded-md border border-border bg-muted/30 p-4 overflow-x-auto;
+  @apply rounded-md border border-border p-4 overflow-x-auto;
+}
+.prose pre code {
+  @apply font-mono text-sm;
 }
 .prose code:not(pre code) {
   @apply bg-muted/50 px-1 py-0.5 rounded text-sm;
@@ -66,6 +72,14 @@ body {
 .prose h2,
 .prose h3 {
   @apply scroll-mt-20;
+}
+
+/* Light/Dark background for code blocks */
+.prose pre {
+  background-color: #0b1020;
+}
+.dark .prose pre {
+  background-color: #0b1020;
 }
 
 /* Optional: line highlight placeholders (if later enabled) */
