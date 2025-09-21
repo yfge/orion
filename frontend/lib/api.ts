@@ -36,6 +36,16 @@ export async function apiFetch(path: string, opts: RequestInit = {}) {
     } catch {
       detail = await res.text();
     }
+    if (
+      res.status === 401 &&
+      typeof window !== "undefined" &&
+      !path.startsWith("/api/v1/auth/")
+    ) {
+      try {
+        clearToken();
+      } catch {}
+      window.location.href = "/auth/login";
+    }
     throw new Error(
       typeof detail === "string" ? detail : detail?.detail || "Request failed",
     );
