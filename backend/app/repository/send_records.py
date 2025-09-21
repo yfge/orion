@@ -1,10 +1,9 @@
-from typing import Tuple, Optional
 from datetime import datetime
 
-from sqlalchemy import select, func
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from ..db.models import SendRecord, SendDetail, MessageDefinition, NotificationAPI, BusinessSystem
+from ..db.models import BusinessSystem, MessageDefinition, NotificationAPI, SendDetail, SendRecord
 
 
 def list_send_records(
@@ -12,12 +11,13 @@ def list_send_records(
     *,
     limit: int = 50,
     offset: int = 0,
-    message_definition_bid: Optional[str] = None,
-    notification_api_bid: Optional[str] = None,
-    status: Optional[int] = None,
-    start_time: Optional[datetime] = None,
-    end_time: Optional[datetime] = None,
-) -> Tuple[list[SendRecord], int]:
+    message_definition_bid: str | None = None,
+    notification_api_bid: str | None = None,
+    status: int | None = None,
+    start_time: datetime | None = None,
+    end_time: datetime | None = None,
+    remark: str | None = None,
+) -> tuple[list[SendRecord], int]:
     base = (
         select(
             SendRecord,
@@ -50,16 +50,11 @@ def list_send_records(
         base = base.where(SendRecord.send_time >= start_time)
     if end_time is not None:
         base = base.where(SendRecord.send_time < end_time)
-    # time range filters (by send_time)
-    # Use naive datetimes as-is (DB default timezone). Callers should pass UTC or DB-local consistently.
-    # We treat None as open-ended.
-    # Note: if send_time is NULL, it will be excluded by these filters.
-    # This is acceptable for dashboard queries.
-    
+    if remark:
+        base = base.where(SendRecord.remark == remark)
+    # Note: time filters use DB-local timezone; pass UTC or DB-local consistently.
 
-    rows = db.execute(
-        base.order_by(SendRecord.id.desc()).limit(limit).offset(offset)
-    ).all()
+    rows = db.execute(base.order_by(SendRecord.id.desc()).limit(limit).offset(offset)).all()
     items: list[SendRecord] = []
     for rec, msg_name, ep_name, bs_name in rows:
         rec.message_name = msg_name  # type: ignore[attr-defined]
@@ -67,7 +62,7 @@ def list_send_records(
         rec.business_system_name = bs_name  # type: ignore[attr-defined]
         items.append(rec)
 
-    count_q = select(func.count()).select_from(SendRecord).where(SendRecord.is_deleted == False)  # noqa: E712
+    count_q = select(func.count()).select_from(SendRecord).where(~SendRecord.is_deleted)
     if message_definition_bid:
         count_q = count_q.where(SendRecord.message_definition_bid == message_definition_bid)
     if notification_api_bid:
@@ -78,7 +73,9 @@ def list_send_records(
         count_q = count_q.where(SendRecord.send_time >= start_time)
     if end_time is not None:
         count_q = count_q.where(SendRecord.send_time < end_time)
-    
+    if remark:
+        count_q = count_q.where(SendRecord.remark == remark)
+
     total = int(db.execute(count_q).scalar_one())
     return items, total
 
@@ -116,7 +113,7 @@ def get_record_by_bid(db: Session, *, bid: str) -> SendRecord | None:
 
 def list_details_by_record(
     db: Session, *, send_record_bid: str, limit: int = 50, offset: int = 0
-) -> Tuple[list[SendDetail], int]:
+) -> tuple[list[SendDetail], int]:
     base = (
         select(SendDetail, NotificationAPI.name.label("endpoint_name"))
         .join(
@@ -128,9 +125,7 @@ def list_details_by_record(
             SendDetail.is_deleted == False,  # noqa: E712
         )
     )
-    rows = db.execute(
-        base.order_by(SendDetail.id.asc()).limit(limit).offset(offset)
-    ).all()
+    rows = db.execute(base.order_by(SendDetail.id.asc()).limit(limit).offset(offset)).all()
     items: list[SendDetail] = []
     for det, ep_name in rows:
         det.endpoint_name = ep_name  # type: ignore[attr-defined]
