@@ -10,7 +10,6 @@ from ...schemas.systems import (
     BusinessSystemUpdate,
 )
 
-
 router = APIRouter(prefix="/systems", tags=["systems"])
 
 
@@ -31,6 +30,7 @@ def create_system(payload: BusinessSystemCreate, db: Session = Depends(get_db)):
 
 
 @router.get("/", response_model=BusinessSystemList)
+@router.get("", response_model=BusinessSystemList)
 def list_systems(
     db: Session = Depends(get_db),
     limit: int = Query(50, ge=1, le=1000),
