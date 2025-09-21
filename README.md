@@ -56,6 +56,21 @@ This repo demonstrates an ai-coding & vibe-coding workflow — documentation-fir
 4. Call `/api/v1/notify` with `{ "message_name": "...", "data": { "text": "hello" } }`
 5. Or use endpoint edit page “Send test” UI
 
+### Email channels (Mailgun, SendGrid, SMTP)
+
+- Mailgun
+  - Create endpoint: transport=http, adapter_key=http.mailgun
+  - Config: `url=https://api.mailgun.net/v3/<domain>/messages`, `api_key=<key>`, optional `from`/`to`
+  - Send test in endpoint page; subject auto="Orion Test", body uses input text
+- SendGrid
+  - Create endpoint: transport=http, adapter_key=http.sendgrid
+  - Config: `url=https://api.sendgrid.com/v3/mail/send`, `api_key=<key>`, optional `from`/`to`
+  - Send test constructs SendGrid JSON with from/to/subject/content
+- SMTP
+  - Create endpoint: transport=smtp, adapter_key=smtp.generic
+  - Config: `host`, optional `port`, `use_tls`/`use_ssl`, optional `username`/`password`, default `from`/`to`
+  - Send test sends a simple email with subject "Orion Test" and text from input; mapping also supports `subject`, `text`, `html`, `from`, `to`
+
 ## Frontend Setup
 
 - `cd frontend && npm i` (or pnpm/yarn)

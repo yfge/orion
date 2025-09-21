@@ -52,6 +52,21 @@ Orion 是一个面向企业场景的统一通知网关：接收业务系统的�
 3. 在“消息定义”或“端点”页建立派发映射
 4. 调用 `/api/v1/notify` 传入 `{text:"..."}`，或在端点编辑页用“测试发送”
 
+### 邮件通道（Mailgun、SendGrid、SMTP）
+
+- Mailgun
+  - 新建端点：transport=http，adapter_key=http.mailgun
+  - 配置：`url=https://api.mailgun.net/v3/<domain>/messages`，`api_key=<key>`，可选 `from`/`to`
+  - 端点编辑页“测试发送”：默认主题为“Orion Test”，正文取输入文本
+- SendGrid
+  - 新建端点：transport=http，adapter_key=http.sendgrid
+  - 配置：`url=https://api.sendgrid.com/v3/mail/send`，`api_key=<key>`，可选 `from`/`to`
+  - 测试发送将按 SendGrid JSON 结构构造 from/to/subject/content
+- SMTP
+  - 新建端点：transport=smtp，adapter_key=smtp.generic
+  - 配置：`host`，可选 `port`、`use_tls`/`use_ssl`、`username`/`password`、默认 `from`/`to`
+  - 测试发送会发送一封主题为“Orion Test”的邮件，正文为输入文本；mapping 也支持 `subject`、`text`、`html`、`from`、`to`
+
 ## 前端使用
 
 - 安装：`cd frontend && npm i`（或 pnpm/yarn）
