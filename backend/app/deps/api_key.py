@@ -27,6 +27,21 @@ def _check_basic_auth(auth_header: str | None, expected: str) -> bool:
         return False
 
 
+def _check_bearer_auth(auth_header: str | None, expected: str) -> bool:
+    if not auth_header:
+        return False
+    try:
+        parts = auth_header.split(" ", 1)
+        if len(parts) != 2:
+            return False
+        scheme, token = parts[0], parts[1]
+        if scheme.lower() != "bearer":
+            return False
+        return token == expected
+    except Exception:
+        return False
+
+
 def require_api_key(
     x_api_key: str | None = Header(default=None, alias="X-API-Key"),
     authorization: str | None = Header(default=None, alias="Authorization"),
@@ -36,6 +51,8 @@ def require_api_key(
         # If not configured, allow for now (could be tightened later)
         return
     if x_api_key == expected:
+        return
+    if _check_bearer_auth(authorization, expected):
         return
     if _check_basic_auth(authorization, expected):
         return
