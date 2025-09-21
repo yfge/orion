@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 /* Prism theme for code highlighting (via rehype-prism-plus) */
-@import "rehype-prism-plus/css/prism-one-dark.css";
+@import "prismjs/themes/prism-tomorrow.css";
 
 :root {
   --background: 0 0% 100%;
