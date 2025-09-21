@@ -32,3 +32,9 @@ class ApiKeyCreateResponse(BaseModel):
     token: str = Field(description="The raw token. Shown only once.")
     prefix: str | None = None
     suffix: str | None = None
+
+
+class ApiKeyUpdate(BaseModel):
+    name: str | None = None
+    description: str | None = None
+    status: int | None = None

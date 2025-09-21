@@ -4,14 +4,21 @@ import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { createApiKey, deleteApiKey, listApiKeys } from "@/lib/api";
+import {
+  createApiKey,
+  deleteApiKey,
+  listApiKeys,
+  updateApiKey,
+} from "@/lib/api";
 
 export default function ApiKeysPage() {
   const [mounted, setMounted] = useState(false);
   const [items, setItems] = useState<any[]>([]);
+  const [total, setTotal] = useState(0);
   const [limit] = useState(50);
   const [offset, setOffset] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [q, setQ] = useState("");
   const [name, setName] = useState("");
   const [desc, setDesc] = useState("");
   const [newToken, setNewToken] = useState<string | null>(null);
@@ -22,6 +29,7 @@ export default function ApiKeysPage() {
     try {
       const res = await listApiKeys({ limit, offset });
       setItems(res.items || []);
+      setTotal(res.total || 0);
     } catch (e: any) {
       setError(e.message || "加载失败");
     } finally {
@@ -103,6 +111,26 @@ export default function ApiKeysPage() {
         )}
       </div>
 
+      <div className="flex flex-wrap items-center gap-2">
+        <Input
+          placeholder="按名称搜索"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          className="w-64"
+        />
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => {
+            setOffset(0);
+            load();
+          }}
+          disabled={loading}
+        >
+          搜索
+        </Button>
+      </div>
+
       <div className="overflow-x-auto rounded-lg border">
         <table className="min-w-full text-sm">
           <thead className="bg-muted/50">
@@ -125,6 +153,17 @@ export default function ApiKeysPage() {
                 </td>
                 <td className="px-3 py-2">
                   <button
+                    onClick={async () => {
+                      await updateApiKey(it.api_key_bid, {
+                        status: it.status === 1 ? 0 : 1,
+                      });
+                      load();
+                    }}
+                    className="text-primary hover:underline mr-3"
+                  >
+                    {it.status === 1 ? "禁用" : "启用"}
+                  </button>
+                  <button
                     onClick={() => onDelete(it.api_key_bid)}
                     className="text-red-600 hover:underline"
                   >
@@ -142,6 +181,26 @@ export default function ApiKeysPage() {
             )}
           </tbody>
         </table>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <Button
+          variant="outline"
+          disabled={offset === 0}
+          onClick={() => setOffset(Math.max(0, offset - limit))}
+        >
+          上一页
+        </Button>
+        <span className="text-sm text-muted-foreground">
+          {offset + 1}-{Math.min(offset + limit, total)} / {total}
+        </span>
+        <Button
+          variant="outline"
+          disabled={offset + limit >= total}
+          onClick={() => setOffset(offset + limit)}
+        >
+          下一页
+        </Button>
       </div>
     </div>
   );

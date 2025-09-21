@@ -1,4 +1,4 @@
-import Link from "next/link"
+import Link from "next/link";
 
 const items = [
   { href: "/", label: "总览" },
@@ -7,7 +7,8 @@ const items = [
   { href: "/messages", label: "消息定义" },
   { href: "/records", label: "发送记录" },
   { href: "/users", label: "用户" },
-]
+  { href: "/api-keys", label: "API Keys" },
+];
 
 export function Sidebar() {
   return (
@@ -22,5 +23,5 @@ export function Sidebar() {
         </Link>
       ))}
     </nav>
-  )
+  );
 }

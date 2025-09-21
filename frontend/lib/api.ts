@@ -352,3 +352,17 @@ export async function createApiKey(payload: {
 export async function deleteApiKey(bid: string) {
   return apiFetch(`/api/v1/api-keys/${bid}`, { method: "DELETE" });
 }
+
+export async function updateApiKey(
+  bid: string,
+  payload: Partial<{
+    name: string;
+    description: string | null;
+    status: number;
+  }>,
+) {
+  return apiFetch(`/api/v1/api-keys/${bid}`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}

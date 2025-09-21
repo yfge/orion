@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import secrets
 
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from ..db.models import ApiKey
@@ -30,10 +31,15 @@ def create_api_key(db: Session, *, name: str, description: str | None = None) ->
     return obj, token
 
 
-def list_api_keys(db: Session, *, limit: int = 50, offset: int = 0) -> tuple[list[ApiKey], int]:
-    q = db.query(ApiKey).filter(ApiKey.is_deleted == False)  # noqa: E712
-    total = q.count()
-    items = q.order_by(ApiKey.id.desc()).limit(limit).offset(offset).all()
+def list_api_keys(
+    db: Session, *, limit: int = 50, offset: int = 0, q: str | None = None
+) -> tuple[list[ApiKey], int]:
+    query = db.query(ApiKey).filter(~ApiKey.is_deleted)
+    if q:
+        like = f"%{q}%"
+        query = query.filter(or_(ApiKey.name.ilike(like)))
+    total = query.count()
+    items = query.order_by(ApiKey.id.desc()).limit(limit).offset(offset).all()
     return items, total
 
 
@@ -56,3 +62,25 @@ def exists_by_token(db: Session, *, token: str) -> bool:
         .first()
     )
     return obj is not None
+
+
+def update_by_bid(
+    db: Session,
+    api_key_bid: str,
+    *,
+    name: str | None = None,
+    description: str | None = None,
+    status: int | None = None,
+) -> ApiKey | None:
+    obj = db.query(ApiKey).filter(ApiKey.api_key_bid == api_key_bid, ~ApiKey.is_deleted).first()
+    if not obj:
+        return None
+    if name is not None:
+        obj.name = name
+    if description is not None:
+        obj.description = description
+    if status is not None:
+        obj.status = int(status)
+    db.add(obj)
+    db.flush()
+    return obj
