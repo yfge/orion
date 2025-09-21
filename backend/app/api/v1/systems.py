@@ -13,7 +13,7 @@ from ...schemas.systems import (
 router = APIRouter(prefix="/systems", tags=["systems"])
 
 
-@router.post("/", response_model=BusinessSystemOut, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=BusinessSystemOut, status_code=status.HTTP_201_CREATED)
 def create_system(payload: BusinessSystemCreate, db: Session = Depends(get_db)):
     obj = repo.create_system(
         db,
@@ -29,7 +29,6 @@ def create_system(payload: BusinessSystemCreate, db: Session = Depends(get_db)):
     return obj
 
 
-@router.get("/", response_model=BusinessSystemList)
 @router.get("", response_model=BusinessSystemList)
 def list_systems(
     db: Session = Depends(get_db),

@@ -76,7 +76,7 @@ export async function registerUser(
 }
 
 export async function fetchUsers() {
-  return apiFetch("/api/v1/users/");
+  return apiFetch("/api/v1/users");
 }
 
 // Business systems
@@ -103,7 +103,7 @@ export async function listSystems(params?: {
 }
 
 export async function createSystem(payload: BusinessSystemPayload) {
-  return apiFetch("/api/v1/systems/", {
+  return apiFetch("/api/v1/systems", {
     method: "POST",
     body: JSON.stringify(payload),
   });
@@ -205,7 +205,7 @@ export async function createMessageDef(payload: {
   schema?: any;
   status?: number | null;
 }) {
-  return apiFetch(`/api/v1/message-definitions/`, {
+  return apiFetch(`/api/v1/message-definitions`, {
     method: "POST",
     body: JSON.stringify(payload),
   });
@@ -355,7 +355,7 @@ export async function createApiKey(payload: {
   name: string;
   description?: string | null;
 }) {
-  return apiFetch(`/api/v1/api-keys/`, {
+  return apiFetch(`/api/v1/api-keys`, {
     method: "POST",
     body: JSON.stringify(payload),
   });

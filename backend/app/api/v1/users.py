@@ -23,7 +23,6 @@ def get_current_user_bid(token: str = Depends(oauth2_scheme)) -> str:
         raise HTTPException(status_code=401, detail="Invalid or expired token") from None
 
 
-@router.get("/", response_model=list[UserOut])
 @router.get("", response_model=list[UserOut])
 def get_users(db: Session = Depends(get_db), _: str = Depends(get_current_user_bid)):
     return list_users(db, limit=100, offset=0)

@@ -3,7 +3,6 @@ from typing import Any
 from fastapi import APIRouter
 from pydantic import BaseModel
 
-
 router = APIRouter(prefix="/schema", tags=["schema"])
 
 
@@ -36,11 +35,12 @@ def validate_schema(payload: ValidateRequest):
             from jsonschema.exceptions import ValidationError  # type: ignore
 
             if isinstance(e, ValidationError):
-                err.update({
-                    "path": list(e.path),
-                    "schema_path": list(e.schema_path),
-                })
+                err.update(
+                    {
+                        "path": list(e.path),
+                        "schema_path": list(e.schema_path),
+                    }
+                )
         except Exception:
             pass
         return {"valid": False, "errors": [err]}
-
