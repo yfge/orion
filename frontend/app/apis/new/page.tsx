@@ -104,8 +104,9 @@ export default function NewApiPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-1">
             <Label htmlFor="transport">类型</Label>
-            <select id="transport" className="border rounded-md h-9 px-3 text-sm w-full" value={transport} onChange={(e) => { setTransport(e.target.value); if (e.target.value === 'http') setAdapterKey('http.generic') }}>
+            <select id="transport" className="border rounded-md h-9 px-3 text-sm w-full" value={transport} onChange={(e) => { const v = e.target.value; setTransport(v); if (v === 'http') setAdapterKey('http.generic'); if (v === 'smtp') setAdapterKey('smtp.generic') }}>
               <option value="http">http</option>
+              <option value="smtp">smtp</option>
               <option value="mq">mq</option>
             </select>
           </div>
@@ -117,8 +118,13 @@ export default function NewApiPage() {
                 <option value="http.generic">http.generic</option>
                 <option value="http.feishu_bot">http.feishu_bot</option>
                 <option value="http.mailgun">http.mailgun</option>
+                <option value="http.sendgrid">http.sendgrid</option>
               </>
-            ) : (
+            ) : transport === 'smtp' ? (
+                <>
+                  <option value="smtp.generic">smtp.generic</option>
+                </>
+              ) : (
                 <>
                   <option value="mq.kafka">mq.kafka</option>
                   <option value="mq.rabbit">mq.rabbit</option>
