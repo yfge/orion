@@ -326,3 +326,29 @@ export async function listSendDetails(
   const suffix = qs.toString() ? `?${qs.toString()}` : "";
   return apiFetch(`/api/v1/send-records/${bid}/details${suffix}`);
 }
+
+// API Keys
+export async function listApiKeys(params?: {
+  limit?: number;
+  offset?: number;
+}) {
+  const qs = new URLSearchParams();
+  if (params?.limit) qs.set("limit", String(params.limit));
+  if (params?.offset) qs.set("offset", String(params.offset));
+  const suffix = qs.toString() ? `?${qs.toString()}` : "";
+  return apiFetch(`/api/v1/api-keys/${suffix}`);
+}
+
+export async function createApiKey(payload: {
+  name: string;
+  description?: string | null;
+}) {
+  return apiFetch(`/api/v1/api-keys/`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function deleteApiKey(bid: string) {
+  return apiFetch(`/api/v1/api-keys/${bid}`, { method: "DELETE" });
+}

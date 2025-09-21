@@ -1,16 +1,6 @@
 import uuid
 
-from sqlalchemy import (
-    JSON,
-    Boolean,
-    DateTime,
-    ForeignKey,
-    Integer,
-    SmallInteger,
-    String,
-    Text,
-    func,
-)
+from sqlalchemy import JSON, Boolean, DateTime, Integer, SmallInteger, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base
@@ -68,18 +58,30 @@ class NotificationAPI(Base, BaseFieldsMixin):
 
     # Extensibility: transport + adapter + config + optional auth profile
     transport: Mapped[str | None] = mapped_column(String(16), nullable=True)  # e.g., http, mq
-    adapter_key: Mapped[str | None] = mapped_column(String(64), nullable=True)  # e.g., http.generic, mq.kafka
+    adapter_key: Mapped[str | None] = mapped_column(
+        String(64), nullable=True
+    )  # e.g., http.generic, mq.kafka
     config: Mapped[dict | None] = mapped_column(JSON, nullable=True)  # adapter-specific
     auth_profile_bid: Mapped[str | None] = mapped_column(String(32), nullable=True, index=True)
 
-    business_system: Mapped[BusinessSystem] = relationship(back_populates="apis", viewonly=True, primaryjoin="foreign(NotificationAPI.business_system_bid)==BusinessSystem.business_system_bid")
-    dispatches: Mapped[list["MessageDispatch"]] = relationship(back_populates="notification_api", viewonly=True, primaryjoin="foreign(MessageDispatch.notification_api_bid)==NotificationAPI.notification_api_bid")
+    business_system: Mapped[BusinessSystem] = relationship(
+        back_populates="apis",
+        viewonly=True,
+        primaryjoin="foreign(NotificationAPI.business_system_bid)==BusinessSystem.business_system_bid",
+    )
+    dispatches: Mapped[list["MessageDispatch"]] = relationship(
+        back_populates="notification_api",
+        viewonly=True,
+        primaryjoin="foreign(MessageDispatch.notification_api_bid)==NotificationAPI.notification_api_bid",
+    )
 
 
 class Secret(Base, BaseFieldsMixin):
     __tablename__ = "secrets"
 
-    secret_bid: Mapped[str] = mapped_column(String(32), unique=True, index=True, default=gen_bid, nullable=False)
+    secret_bid: Mapped[str] = mapped_column(
+        String(32), unique=True, index=True, default=gen_bid, nullable=False
+    )
     key: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
     value: Mapped[str | None] = mapped_column(Text, nullable=True)
     metadata_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
@@ -88,11 +90,12 @@ class Secret(Base, BaseFieldsMixin):
 class AuthProfile(Base, BaseFieldsMixin):
     __tablename__ = "auth_profiles"
 
-    auth_profile_bid: Mapped[str] = mapped_column(String(32), unique=True, index=True, default=gen_bid, nullable=False)
+    auth_profile_bid: Mapped[str] = mapped_column(
+        String(32), unique=True, index=True, default=gen_bid, nullable=False
+    )
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     type: Mapped[str] = mapped_column(String(32))  # none|oauth2_client_credentials|hmac|jwt|custom
     config: Mapped[dict | None] = mapped_column(JSON, nullable=True)
-
 
 
 class MessageDefinition(Base, BaseFieldsMixin):
@@ -105,7 +108,11 @@ class MessageDefinition(Base, BaseFieldsMixin):
     type: Mapped[str | None] = mapped_column(String(64), nullable=True)
     schema: Mapped[dict | None] = mapped_column(JSON, nullable=True)
 
-    dispatches: Mapped[list["MessageDispatch"]] = relationship(back_populates="message_definition", viewonly=True, primaryjoin="foreign(MessageDispatch.message_definition_bid)==MessageDefinition.message_definition_bid")
+    dispatches: Mapped[list["MessageDispatch"]] = relationship(
+        back_populates="message_definition",
+        viewonly=True,
+        primaryjoin="foreign(MessageDispatch.message_definition_bid)==MessageDefinition.message_definition_bid",
+    )
 
 
 class MessageDispatch(Base, BaseFieldsMixin):
@@ -119,8 +126,16 @@ class MessageDispatch(Base, BaseFieldsMixin):
     mapping: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     enabled: Mapped[bool] = mapped_column(Boolean, server_default="1", nullable=False)
 
-    message_definition: Mapped[MessageDefinition] = relationship(back_populates="dispatches", viewonly=True, primaryjoin="foreign(MessageDispatch.message_definition_bid)==MessageDefinition.message_definition_bid")
-    notification_api: Mapped[NotificationAPI] = relationship(back_populates="dispatches", viewonly=True, primaryjoin="foreign(MessageDispatch.notification_api_bid)==NotificationAPI.notification_api_bid")
+    message_definition: Mapped[MessageDefinition] = relationship(
+        back_populates="dispatches",
+        viewonly=True,
+        primaryjoin="foreign(MessageDispatch.message_definition_bid)==MessageDefinition.message_definition_bid",
+    )
+    notification_api: Mapped[NotificationAPI] = relationship(
+        back_populates="dispatches",
+        viewonly=True,
+        primaryjoin="foreign(MessageDispatch.notification_api_bid)==NotificationAPI.notification_api_bid",
+    )
 
 
 class SendRecord(Base, BaseFieldsMixin):
@@ -135,7 +150,11 @@ class SendRecord(Base, BaseFieldsMixin):
     result: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     remark: Mapped[str | None] = mapped_column(Text, nullable=True)
 
-    details: Mapped[list["SendDetail"]] = relationship(back_populates="send_record", viewonly=True, primaryjoin="foreign(SendDetail.send_record_bid)==SendRecord.send_record_bid")
+    details: Mapped[list["SendDetail"]] = relationship(
+        back_populates="send_record",
+        viewonly=True,
+        primaryjoin="foreign(SendDetail.send_record_bid)==SendRecord.send_record_bid",
+    )
 
 
 class SendDetail(Base, BaseFieldsMixin):
@@ -152,7 +171,11 @@ class SendDetail(Base, BaseFieldsMixin):
     sent_at: Mapped[DateTime | None] = mapped_column(DateTime, nullable=True)
     error: Mapped[str | None] = mapped_column(Text, nullable=True)
 
-    send_record: Mapped[SendRecord] = relationship(back_populates="details", viewonly=True, primaryjoin="foreign(SendDetail.send_record_bid)==SendRecord.send_record_bid")
+    send_record: Mapped[SendRecord] = relationship(
+        back_populates="details",
+        viewonly=True,
+        primaryjoin="foreign(SendDetail.send_record_bid)==SendRecord.send_record_bid",
+    )
 
 
 class User(Base, BaseFieldsMixin):
@@ -165,3 +188,20 @@ class User(Base, BaseFieldsMixin):
     email: Mapped[str | None] = mapped_column(String(255), nullable=True)
     phone: Mapped[str | None] = mapped_column(String(32), nullable=True)
     hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
+
+
+class ApiKey(Base, BaseFieldsMixin):
+    __tablename__ = "api_keys"
+
+    api_key_bid: Mapped[str] = mapped_column(
+        String(32), unique=True, index=True, default=gen_bid, nullable=False
+    )
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)  # sha256 hex
+    prefix: Mapped[str | None] = mapped_column(
+        String(16), nullable=True
+    )  # first 6-8 chars for display
+    suffix: Mapped[str | None] = mapped_column(
+        String(16), nullable=True
+    )  # last 4-6 chars for display
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
