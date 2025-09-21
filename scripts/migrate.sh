@@ -22,17 +22,19 @@ if ! command -v alembic >/dev/null 2>&1; then
   exit 1
 fi
 
-CONF="backend/alembic.ini"
+# Run Alembic from backend dir so script_location=alembic resolves correctly
+BACKEND_DIR="$ROOT_DIR/backend"
+CONF="alembic.ini"
 
 cmd="${1:-upgrade}"
 shift || true
 
 case "$cmd" in
   upgrade|downgrade|current|history|stamp)
-    exec alembic -c "$CONF" "$cmd" "$@"
+    ( cd "$BACKEND_DIR" && exec alembic -c "$CONF" "$cmd" "$@" )
     ;;
   revision)
-    exec alembic -c "$CONF" revision "$@"
+    ( cd "$BACKEND_DIR" && exec alembic -c "$CONF" revision "$@" )
     ;;
   *)
     cat >&2 <<USAGE
@@ -55,4 +57,3 @@ USAGE
     exit 2
     ;;
 esac
-
