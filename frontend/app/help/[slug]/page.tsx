@@ -4,7 +4,10 @@ import Link from "next/link";
 import { simpleMarkdownToHtml } from "@/lib/markdown";
 
 export default function HelpArticle({ params }: { params: { slug: string } }) {
-  const helpDir = path.join(process.cwd(), "frontend", "help");
+  let helpDir = path.join(process.cwd(), "help");
+  if (!fs.existsSync(helpDir)) {
+    helpDir = path.join(process.cwd(), "frontend", "help");
+  }
   const file = path.join(helpDir, `${params.slug}.md`);
   if (!fs.existsSync(file)) {
     return (

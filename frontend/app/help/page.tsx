@@ -3,7 +3,11 @@ import path from "node:path";
 import Link from "next/link";
 
 export default function HelpIndex() {
-  const helpDir = path.join(process.cwd(), "frontend", "help");
+  // Determine help directory for both `npm run dev` in frontend/ and repo-root executions
+  let helpDir = path.join(process.cwd(), "help");
+  if (!fs.existsSync(helpDir)) {
+    helpDir = path.join(process.cwd(), "frontend", "help");
+  }
   let items: { slug: string; title: string }[] = [];
   try {
     const files = fs.readdirSync(helpDir).filter((f) => f.endsWith(".md"));
