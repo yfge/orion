@@ -8,6 +8,7 @@ const items = [
   { href: "/records", label: "发送记录" },
   { href: "/users", label: "用户" },
   { href: "/api-keys", label: "API Keys" },
+  { href: "/help", label: "帮助" },
 ];
 
 export function Sidebar() {
