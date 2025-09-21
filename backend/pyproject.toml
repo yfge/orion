@@ -57,7 +57,7 @@ select = [
   "B",
   "UP",
 ]
-ignore = []
+ignore = ["B008"]
 fix = true
 
 [tool.pytest.ini_options]

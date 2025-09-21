@@ -39,11 +39,15 @@ Orion 是一个面向企业场景的统一通知网关：接收业务系统的�
 
 ### 通知 API（公开）
 
-- 鉴权：`X-API-Key`（`.env` 设置 `ORION_PUBLIC_API_KEY`；未设置则临时放行）
+- 鉴权：`X-API-Key` 或 HTTP Basic（`api:<key>`）
+  - 在后端 `.env`/compose 环境设置 `ORION_PUBLIC_API_KEY`
+  - Basic 示例：`Authorization: Basic` + base64(`api:<key>`)
 - 请求：`POST /api/v1/notify`
   - 方式一（按名称）：`{"message_name":"simple-text","data":{"text":"你好"}}`
   - 方式二（按 BID）：`{"message_definition_bid":"...","data":{...}}`
 - 响应：`{"results":[{"dispatch_bid","endpoint_bid","status_code","body"}]}`
+
+- 生成随机 Key（预览）：`POST /api/v1/notify/keys/preview` 返回一个随机建议，请将其配置到后端的 `ORION_PUBLIC_API_KEY`。
 
 ### 飞书快速联调
 

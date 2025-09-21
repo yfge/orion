@@ -41,12 +41,16 @@ This repo demonstrates an ai-coding & vibe-coding workflow — documentation-fir
 
 ### Notify API (Public)
 
-- Auth: header `X-API-Key` (set `ORION_PUBLIC_API_KEY` in `.env`)
+- Auth: either header `X-API-Key` or HTTP Basic with `api:<key>`
+  - Set `ORION_PUBLIC_API_KEY` in `.env` or compose env
+  - Basic example: `Authorization: Basic` + base64(`api:<key>`)
 - Endpoint: `POST /api/v1/notify`
 - Body options:
   - By name: `{ "message_name": "simple-text", "data": { "text": "hi" } }`
   - By bid: `{ "message_definition_bid": "...", "data": { ... } }`
 - Response: `{ "results": [ { "dispatch_bid", "endpoint_bid", "status_code", "body" } ] }`
+
+- Generate a key (preview): `POST /api/v1/notify/keys/preview` returns a random key suggestion; set it to `ORION_PUBLIC_API_KEY` on the backend.
 
 ### Feishu quick test
 
