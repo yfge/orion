@@ -8,7 +8,7 @@
   "nav.messages": "消息定义",
   "nav.records": "发送记录",
   "nav.users": "用户",
-  "nav.apiKeys": "API Keys",
+  "nav.apiKeys": "API 密钥",
   "nav.help": "帮助",
   "home.title": "欢迎来到 Orion 控制台",
   "home.subtitle": "统一的通知网关：配置渠道、管理模板、查看发送记录与状态。",
