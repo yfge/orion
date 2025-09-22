@@ -1,15 +1,15 @@
 % Help Center
 
-Welcome to Orion Notification Gateway. This section covers setup, daily operations, APIs, FAQs and troubleshooting.
+Welcome to Orion Notification Gateway. This help covers setup and launch, daily configuration, Open APIs, FAQs, and troubleshooting.
 
-- Basics
+- Basics & Getting Started
   - [Quickstart](quickstart)
   - [Endpoints & Dispatches](endpoints)
-  - [API Keys and usage](api-keys)
+  - [API Keys: management and usage](api-keys)
 - Open API
-  - [Notify API and auth](notify)
-  - [Third-party integration guide](third-party)
+  - [Notify API usage and authentication](notify)
+  - [Third‑party integration guide (vendors/external systems)](third-party)
 - Adapters
   - [Email adapters (Mailgun/SendGrid/SMTP)](email)
 
-More topics can be added as Markdown under this folder.
+Add more topics as Markdown under this directory; the Console “Help” will auto‑index them.
