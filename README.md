@@ -16,6 +16,19 @@ This repo demonstrates an ai-coding & vibe-coding workflow — documentation-fir
 - Auth profiles: CRUD ready; attach to endpoints (future auth providers wiring).
 - Frontend console: manage systems, endpoints, messages, and mappings.
 
+## Internationalization (i18n)
+
+- Languages: Simplified Chinese (`zh-CN`) and English (`en-US`).
+- UI texts: stored in `frontend/messages/{locale}.json`; a lightweight provider exposes `t(key)` across pages.
+- Language detection: a middleware sets the `LANG` cookie (derived from `Accept-Language` on first visit). The navbar includes a language switcher that updates `LANG` and reloads.
+- Backend negotiation: FastAPI middleware negotiates locale (`?lang` → `Cookie LANG` → `Accept-Language` → default `zh-CN`) and injects `Content-Language` in responses.
+- Help center: loads Markdown from `frontend/help/<locale>/` with fallback to `frontend/help/` when a localized document is missing.
+- Where to extend:
+  - Add `frontend/messages/<new-locale>.json` and update `SUPPORTED_LOCALES`.
+  - Add `frontend/help/<new-locale>/*.md` for localized docs.
+  - Backend: add translations via Babel/`pybabel` under `backend/locale/<lang>/LC_MESSAGES`.
+- Roadmap: migrate to `next-intl` with `[locale]/` routes and SEO `hreflang`/`alternates`.
+
 ## Tech Stack
 
 - Backend: Python 3.11, FastAPI, SQLAlchemy, Alembic, PyJWT/Passlib (optional), httpx
@@ -81,6 +94,12 @@ This repo demonstrates an ai-coding & vibe-coding workflow — documentation-fir
 - Run: `npm run dev` and open http://localhost:3000
 - Note: the browser uses same-origin `/api` calls; for local dev without Docker/Nginx, set up a dev proxy from `/api` → `http://127.0.0.1:8000` (e.g., Next.js rewrites) or prefer Docker Compose below which already proxies via Nginx.
 - Navigate to Systems, Endpoints, Messages; create mappings in Messages or Endpoints pages
+
+### i18n quick guide (frontend)
+
+- Switch language using the selector in the navbar; the current language persists in `LANG` cookie.
+- To localize a page, replace hardcoded strings with `t('...')` and add keys to `frontend/messages/{locale}.json`.
+- Help docs: place localized pages in `frontend/help/en-US/*` (or another locale folder). Titles use `# Heading` Markdown.
 
 ## Docker (one‑command bring‑up)
 

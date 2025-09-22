@@ -14,6 +14,19 @@ Orion 是一个面向企业场景的统一通知网关：接收业务系统的�
 - 认证配置（AuthProfile）：增删改查已具备（后续与 Sender 深度集成）
 - 控制台前端：系统/端点/消息/映射全流程管理
 
+## 多语言（i18n）
+
+- 语言：简体中文（`zh-CN`）与英文（`en-US`）。
+- 文案来源：`frontend/messages/{locale}.json`；全站通过轻量 Provider 提供 `t(key)`。
+- 语言检测：前端中间件按 `Accept-Language` 初次设置 `LANG` Cookie；导航栏支持语言切换（更新 `LANG` 并刷新）。
+- 后端协商：FastAPI 中间件按优先级协商（`?lang` → `Cookie LANG` → `Accept-Language` → 默认 `zh-CN`），响应注入 `Content-Language` 头。
+- 帮助中心：优先加载 `frontend/help/<locale>/*.md`，若缺失回退到 `frontend/help/*.md`；Markdown 标题请使用 `#`。
+- 如何扩展：
+  - 新增 `frontend/messages/<new-locale>.json` 并更新 `SUPPORTED_LOCALES`；
+  - 在 `frontend/help/<new-locale>/` 下提供对应 Markdown 文档；
+  - 后端通过 Babel/`pybabel` 在 `backend/locale/<lang>/LC_MESSAGES` 增加翻译。
+- 路线：后续迁移至 `next-intl` 与 `[locale]/` 前缀路由，并完善 SEO 的 `hreflang/alternates`。
+
 ## 技术栈
 
 - 后端：Python 3.11、FastAPI、SQLAlchemy、Alembic、httpx
@@ -77,6 +90,12 @@ Orion 是一个面向企业场景的统一通知网关：接收业务系统的�
 - 启动：`npm run dev`，浏览器访问 http://localhost:3000
 - 说明：浏览器侧走同源的 `/api`；若本地未使用 Docker/Nginx，需要在 Next.js 开发环境配置一个将 `/api` 代理到 `http://127.0.0.1:8000` 的重写（rewrites）；或直接使用下方 Docker Compose（已由 Nginx 代理到后端）。
 - 操作：系统/端点/消息管理；在消息或端点页面配置映射
+
+### 前端 i18n 提示
+
+- 通过导航栏选择语言；当前语言保存在 `LANG` Cookie。
+- 页面文案改造：使用 `t('...')` 替换硬编码，并在 `frontend/messages/{locale}.json` 添加键值。
+- 帮助文档：在 `frontend/help/en-US/*`（或其他语言目录）放置本地化 Markdown；首行用 `#` 标题。
 
 ## 使用 Docker 一键启动
 
