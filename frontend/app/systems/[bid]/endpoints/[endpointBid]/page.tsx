@@ -19,8 +19,10 @@ import {
 } from "@/lib/api";
 import { endpointConfigSchemaFor, mappingSchemaFor } from "@/lib/schemas";
 import { RjsfForm } from "@/components/jsonschema/RjsfForm";
+import { useI18n } from "@/i18n/provider";
 
 export default function EditEndpointPage() {
+  const { t } = useI18n();
   const params = useParams<{ bid: string; endpointBid: string }>();
   const systemBid = params?.bid as string;
   const endpointBid = params?.endpointBid as string;
@@ -58,7 +60,7 @@ export default function EditEndpointPage() {
         setConfigObj(cfgObj);
         setAuthProfileBid(data.auth_profile_bid || "");
       } catch (err: any) {
-        setError(err.message || "加载失败");
+        setError(err.message || t("common.failedLoad"));
       } finally {
         setLoading(false);
       }
@@ -100,19 +102,19 @@ export default function EditEndpointPage() {
       });
       router.push(`/systems/${systemBid}`);
     } catch (err: any) {
-      setError(err.message || "保存失败，检查配置 JSON 是否有效");
+      setError(err.message || t("endpoints.save.failed"));
     } finally {
       setLoading(false);
     }
   };
 
   const onDelete = async () => {
-    if (!confirm("确认删除该端点？")) return;
+    if (!confirm(t("endpoints.delete.confirm"))) return;
     try {
       await deleteEndpoint(endpointBid);
       router.push(`/systems/${systemBid}`);
     } catch (err: any) {
-      alert(err.message || "删除失败");
+      alert(err.message || t("common.failedDelete"));
     }
   };
 
@@ -153,23 +155,24 @@ export default function EditEndpointPage() {
     }
   };
 
-  if (loading && !name) return <div className="container">加载中...</div>;
+  if (loading && !name)
+    return <div className="container">{t("common.loading")}</div>;
 
   return (
     <div className="container max-w-2xl">
       <div className="flex items-center justify-between mb-4">
-        <h1 className="text-2xl font-semibold">编辑端点</h1>
+        <h1 className="text-2xl font-semibold">{t("endpoints.edit.title")}</h1>
         <Button
           variant="outline"
           onClick={onDelete}
           className="text-red-600 border-red-600"
         >
-          删除
+          {t("common.delete")}
         </Button>
       </div>
       <form onSubmit={onSubmit} className="space-y-4">
         <div className="space-y-1">
-          <Label htmlFor="name">名称</Label>
+          <Label htmlFor="name">{t("endpoints.fields.name")}</Label>
           <Input
             id="name"
             value={name}
@@ -179,7 +182,7 @@ export default function EditEndpointPage() {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-1">
-            <Label htmlFor="transport">类型</Label>
+            <Label htmlFor="transport">{t("endpoints.fields.transport")}</Label>
             <select
               id="transport"
               className="border rounded-md h-9 px-3 text-sm w-full"
@@ -191,7 +194,7 @@ export default function EditEndpointPage() {
             </select>
           </div>
           <div className="space-y-1">
-            <Label htmlFor="adapterKey">适配器</Label>
+            <Label htmlFor="adapterKey">{t("endpoints.fields.adapter")}</Label>
             <Input
               id="adapterKey"
               value={adapterKey}
@@ -200,7 +203,7 @@ export default function EditEndpointPage() {
           </div>
         </div>
         <div className="space-y-1">
-          <Label htmlFor="endpointUrl">地址（HTTP 可用）</Label>
+          <Label htmlFor="endpointUrl">{t("endpoints.fields.httpUrl")}</Label>
           <Input
             id="endpointUrl"
             value={endpointUrl}
@@ -208,14 +211,14 @@ export default function EditEndpointPage() {
           />
         </div>
         <div className="space-y-1">
-          <Label htmlFor="authProfile">认证配置（可选）</Label>
+          <Label htmlFor="authProfile">{t("endpoints.fields.auth")}</Label>
           <select
             id="authProfile"
             className="border rounded-md h-9 px-3 text-sm w-full"
             value={authProfileBid}
             onChange={(e) => setAuthProfileBid(e.target.value)}
           >
-            <option value="">不使用认证</option>
+            <option value="">{t("endpoints.fields.auth.none")}</option>
             {authProfiles.map((p) => (
               <option key={p.auth_profile_bid} value={p.auth_profile_bid}>
                 {p.name} ({p.type})
@@ -224,9 +227,9 @@ export default function EditEndpointPage() {
           </select>
         </div>
         <div className="space-y-1">
-          <Label>配置（基于适配器 Schema）</Label>
+          <Label>{t("endpoints.fields.configSchemaForm")}</Label>
           <RjsfForm
-            schema={endpointConfigSchemaFor(adapterKey)}
+            schema={endpointConfigSchemaFor(adapterKey, t)}
             formData={configObj}
             onChange={(val) => {
               setConfigObj(val);
@@ -235,26 +238,23 @@ export default function EditEndpointPage() {
           />
           {adapterKey === "http.mailgun" && (
             <p className="text-xs text-muted-foreground">
-              Mailgun 提示：API URL 如
-              https://api.mailgun.net/v3/&lt;domain&gt;/messages；设置
-              api_key；可在 config 里预设 from/to 方便测试。
+              {t("endpoints.hints.mailgun")}
             </p>
           )}
           {adapterKey === "http.sendgrid" && (
             <p className="text-xs text-muted-foreground">
-              SendGrid 提示：API URL 通常为
-              https://api.sendgrid.com/v3/mail/send；设置 api_key；建议在 config
-              里预设 from/to 以便测试。
+              {t("endpoints.hints.sendgrid")}
             </p>
           )}
           {(adapterKey?.startsWith("smtp.") || transport === "smtp") && (
             <p className="text-xs text-muted-foreground">
-              SMTP 提示：配置 host、端口、TLS/SSL、用户名/密码（如需）、默认
-              from/to。支持 text 与 html。
+              {t("endpoints.hints.smtp")}
             </p>
           )}
           <div className="space-y-1 mt-2">
-            <Label htmlFor="config">高级模式：配置 JSON</Label>
+            <Label htmlFor="config">
+              {t("apis.fields.configJsonAdvanced")}
+            </Label>
             <Textarea
               id="config"
               value={configText}
@@ -270,19 +270,23 @@ export default function EditEndpointPage() {
         </div>
         <div className="space-y-3">
           <h2 className="text-lg font-medium">
-            派发映射（Endpoint ← Message）
+            {t("endpoints.dispatch.title")}
           </h2>
           <div className="rounded-lg border p-3 space-y-3">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1">
-                <Label htmlFor="msg">选择消息定义</Label>
+                <Label htmlFor="msg">
+                  {t("endpoints.dispatch.selectMessage")}
+                </Label>
                 <select
                   id="msg"
                   className="border rounded-md h-9 px-3 text-sm w-full"
                   value={newMsgBid}
                   onChange={(e) => setNewMsgBid(e.target.value)}
                 >
-                  <option value="">选择消息定义</option>
+                  <option value="">
+                    {t("endpoints.dispatch.selectMessagePlaceholder")}
+                  </option>
                   {messageDefs.map((m) => (
                     <option
                       key={m.message_definition_bid}
@@ -294,20 +298,22 @@ export default function EditEndpointPage() {
                 </select>
               </div>
               <div className="space-y-1">
-                <Label htmlFor="enabled2">启用</Label>
+                <Label htmlFor="enabled2">
+                  {t("endpoints.dispatch.enabled")}
+                </Label>
                 <select
                   id="enabled2"
                   className="border rounded-md h-9 px-3 text-sm w-full"
                   value={newEnabled ? "1" : "0"}
                   onChange={(e) => setNewEnabled(e.target.value === "1")}
                 >
-                  <option value="1">是</option>
-                  <option value="0">否</option>
+                  <option value="1">{t("common.yes")}</option>
+                  <option value="0">{t("common.no")}</option>
                 </select>
               </div>
             </div>
             <div className="space-y-2">
-              <Label>映射（Schema 表单，可选）</Label>
+              <Label>{t("endpoints.dispatch.mappingSchema")}</Label>
               <RjsfForm
                 schema={mappingSchemaFor(
                   adapterKey,
@@ -326,12 +332,13 @@ export default function EditEndpointPage() {
                 (typeof adapterKey === "string" &&
                   adapterKey.startsWith("smtp."))) && (
                 <p className="text-xs text-muted-foreground">
-                  邮件映射可设置
-                  from、to、subject、text、html（如未设置则使用配置或默认值）。
+                  {t("endpoints.dispatch.mailMappingHint")}
                 </p>
               )}
               <div className="space-y-1">
-                <Label htmlFor="mapping2">高级：Mapping JSON（可选）</Label>
+                <Label htmlFor="mapping2">
+                  {t("endpoints.dispatch.mappingJsonAdvanced")}
+                </Label>
                 <Textarea
                   id="mapping2"
                   className="font-mono"
@@ -351,7 +358,7 @@ export default function EditEndpointPage() {
                 onClick={onAddDispatch}
                 disabled={!newMsgBid}
               >
-                新增映射
+                {t("endpoints.dispatch.addMapping")}
               </Button>
             </div>
           </div>
@@ -360,16 +367,24 @@ export default function EditEndpointPage() {
             <table className="min-w-full text-sm">
               <thead className="bg-muted/50">
                 <tr>
-                  <th className="px-3 py-2 text-left">消息定义</th>
-                  <th className="px-3 py-2 text-left">启用</th>
-                  <th className="px-3 py-2 text-left">操作</th>
+                  <th className="px-3 py-2 text-left">
+                    {t("endpoints.dispatch.table.message")}
+                  </th>
+                  <th className="px-3 py-2 text-left">
+                    {t("endpoints.dispatch.table.enabled")}
+                  </th>
+                  <th className="px-3 py-2 text-left">
+                    {t("endpoints.dispatch.table.actions")}
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {endpointDispatches.map((d) => (
                   <tr key={d.message_dispatch_bid} className="border-t">
                     <td className="px-3 py-2">{d.message_definition_bid}</td>
-                    <td className="px-3 py-2">{d.enabled ? "是" : "否"}</td>
+                    <td className="px-3 py-2">
+                      {d.enabled ? t("common.yes") : t("common.no")}
+                    </td>
                     <td className="px-3 py-2">
                       <button
                         onClick={async () => {
@@ -380,7 +395,7 @@ export default function EditEndpointPage() {
                         }}
                         className="text-red-600 hover:underline"
                       >
-                        删除
+                        {t("common.delete")}
                       </button>
                     </td>
                   </tr>
@@ -388,7 +403,7 @@ export default function EditEndpointPage() {
                 {endpointDispatches.length === 0 && (
                   <tr>
                     <td className="px-3 py-4 text-muted-foreground" colSpan={3}>
-                      暂无映射
+                      {t("endpoints.dispatch.none")}
                     </td>
                   </tr>
                 )}
@@ -397,16 +412,16 @@ export default function EditEndpointPage() {
           </div>
         </div>
         <div className="space-y-1">
-          <Label htmlFor="test">测试发送（按适配器自动构造消息）</Label>
+          <Label htmlFor="test">{t("endpoints.test.title")}</Label>
           <div className="flex gap-2">
             <Input
               id="test"
               value={testText}
               onChange={(e) => setTestText(e.target.value)}
-              placeholder="测试消息文本"
+              placeholder={t("endpoints.test.placeholder")}
             />
             <Button type="button" variant="outline" onClick={onSendTest}>
-              发送
+              {t("endpoints.test.send")}
             </Button>
           </div>
           {testResult && (
@@ -418,14 +433,14 @@ export default function EditEndpointPage() {
         {error && <p className="text-sm text-red-600">{error}</p>}
         <div className="flex gap-2">
           <Button type="submit" disabled={loading}>
-            {loading ? "保存中..." : "保存"}
+            {loading ? t("common.saving") : t("common.save")}
           </Button>
           <Button
             type="button"
             variant="outline"
             onClick={() => router.push(`/systems/${systemBid}`)}
           >
-            取消
+            {t("common.cancel")}
           </Button>
         </div>
       </form>
