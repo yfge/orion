@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .api.v1.router import router as api_v1_router
 from .core.config import settings
+from .core.i18n import I18nMiddleware
 
 
 def create_app() -> FastAPI:
@@ -22,6 +23,9 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    # i18n middleware (language negotiation and context)
+    app.add_middleware(I18nMiddleware)
 
     # Routers
     app.include_router(api_v1_router, prefix="/api/v1")

@@ -105,4 +105,14 @@ class I18nMiddleware:
             set_locale(loc)
             scope.setdefault("state", {})
             scope["state"]["locale"] = loc
+
+            async def send_wrapper(message):
+                if message.get("type") == "http.response.start":
+                    headers = list(message.get("headers", []))
+                    headers.append((b"content-language", loc.encode("ascii")))
+                    message["headers"] = headers
+                await send(message)
+
+            await self.app(scope, receive, send_wrapper)
+            return
         await self.app(scope, receive, send)
