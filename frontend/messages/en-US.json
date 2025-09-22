@@ -1,4 +1,5 @@
 {
   "common.status.ok": "OK",
-  "nav.home": "Home"
+  "nav.home": "Home",
+  "nav.tagline": "Notification Gateway"
 }
