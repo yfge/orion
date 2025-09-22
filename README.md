@@ -150,4 +150,4 @@ This repo demonstrates an ai-coding & vibe-coding workflow — documentation-fir
 
 ## License
 
-TBD.
+MIT — see the [LICENSE](LICENSE) file for details.
