@@ -9,7 +9,7 @@ description = "Orion notification gateway backend (FastAPI)"
 readme = "README.md"
 requires-python = ">=3.11"
 authors = [
-  {name = "Orion Team"}
+  { name = "yfge", email = "geyunfei@gmail.com" }
 ]
 dependencies = [
   # Backend runtime
