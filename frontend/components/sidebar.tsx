@@ -1,17 +1,21 @@
-import Link from "next/link";
+"use client";
 
-const items = [
-  { href: "/", label: "总览" },
-  { href: "/systems", label: "业务系统" },
-  { href: "/apis", label: "通知 API" },
-  { href: "/messages", label: "消息定义" },
-  { href: "/records", label: "发送记录" },
-  { href: "/users", label: "用户" },
-  { href: "/api-keys", label: "API Keys" },
-  { href: "/help", label: "帮助" },
+import Link from "next/link";
+import { useI18n } from "@/i18n/provider";
+
+const items: { href: string; key: string }[] = [
+  { href: "/", key: "nav.overview" },
+  { href: "/systems", key: "nav.systems" },
+  { href: "/apis", key: "nav.apis" },
+  { href: "/messages", key: "nav.messages" },
+  { href: "/records", key: "nav.records" },
+  { href: "/users", key: "nav.users" },
+  { href: "/api-keys", key: "nav.apiKeys" },
+  { href: "/help", key: "nav.help" },
 ];
 
 export function Sidebar() {
+  const { t } = useI18n();
   return (
     <nav className="p-4 space-y-1">
       {items.map((it) => (
@@ -20,7 +24,7 @@ export function Sidebar() {
           href={it.href}
           className="block px-3 py-2 rounded-md text-sm hover:bg-accent hover:text-accent-foreground text-muted-foreground"
         >
-          {it.label}
+          {t(it.key)}
         </Link>
       ))}
     </nav>

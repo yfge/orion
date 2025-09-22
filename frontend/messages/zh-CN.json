@@ -1,5 +1,13 @@
 {
   "common.status.ok": "正常",
   "nav.home": "首页",
-  "nav.tagline": "通知网关"
+  "nav.tagline": "通知网关",
+  "nav.overview": "总览",
+  "nav.systems": "业务系统",
+  "nav.apis": "通知 API",
+  "nav.messages": "消息定义",
+  "nav.records": "发送记录",
+  "nav.users": "用户",
+  "nav.apiKeys": "API Keys",
+  "nav.help": "帮助"
 }

@@ -1,5 +1,13 @@
 {
   "common.status.ok": "OK",
   "nav.home": "Home",
-  "nav.tagline": "Notification Gateway"
+  "nav.tagline": "Notification Gateway",
+  "nav.overview": "Overview",
+  "nav.systems": "Systems",
+  "nav.apis": "Notify APIs",
+  "nav.messages": "Message Definitions",
+  "nav.records": "Send Records",
+  "nav.users": "Users",
+  "nav.apiKeys": "API Keys",
+  "nav.help": "Help"
 }
