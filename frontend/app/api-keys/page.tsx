@@ -10,8 +10,10 @@ import {
   listApiKeys,
   updateApiKey,
 } from "@/lib/api";
+import { useI18n } from "@/i18n/provider";
 
 export default function ApiKeysPage() {
+  const { t } = useI18n();
   const [mounted, setMounted] = useState(false);
   const [items, setItems] = useState<any[]>([]);
   const [total, setTotal] = useState(0);
@@ -31,7 +33,7 @@ export default function ApiKeysPage() {
       setItems(res.items || []);
       setTotal(res.total || 0);
     } catch (e: any) {
-      setError(e.message || "加载失败");
+      setError(e.message || t("common.failedLoad"));
     } finally {
       setLoading(false);
     }
@@ -51,61 +53,62 @@ export default function ApiKeysPage() {
       setDesc("");
       load();
     } catch (e: any) {
-      setError(e.message || "创建失败");
+      setError(e.message || t("apiKeys.create.failed"));
     }
   };
 
   const onDelete = async (bid: string) => {
-    if (!confirm("确认删除该 API Key？删除后不可使用。")) return;
+    if (!confirm(t("apiKeys.delete.confirm"))) return;
     try {
       await deleteApiKey(bid);
       load();
     } catch (e: any) {
-      alert(e.message || "删除失败");
+      alert(e.message || t("common.failedDelete"));
     }
   };
 
-  if (!mounted) return <div className="container">加载中...</div>;
+  if (!mounted) return <div className="container">{t("common.loading")}</div>;
 
   return (
     <div className="container max-w-2xl space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">API Keys</h1>
+        <h1 className="text-2xl font-semibold">{t("apiKeys.title")}</h1>
       </div>
 
       <div className="rounded-lg border p-4 space-y-3">
-        <h2 className="text-lg font-medium">新建</h2>
+        <h2 className="text-lg font-medium">{t("apiKeys.new.title")}</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-1">
-            <Label htmlFor="name">名称</Label>
+            <Label htmlFor="name">{t("apiKeys.fields.name")}</Label>
             <Input
               id="name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="例如：Notify 公共 Key"
+              placeholder={t("apiKeys.fields.name.placeholder")}
             />
           </div>
           <div className="space-y-1 md:col-span-2">
-            <Label htmlFor="desc">描述（可选）</Label>
+            <Label htmlFor="desc">{t("apiKeys.fields.desc")}</Label>
             <Input
               id="desc"
               value={desc}
               onChange={(e) => setDesc(e.target.value)}
-              placeholder="用途说明..."
+              placeholder={t("apiKeys.fields.desc.placeholder")}
             />
           </div>
         </div>
         <Button type="button" onClick={onCreate} disabled={!name}>
-          创建
+          {t("apiKeys.create")}
         </Button>
         {error && <p className="text-sm text-red-600">{error}</p>}
         {newToken && (
           <div className="rounded-md border p-3 text-sm">
-            <div className="font-medium mb-1">新密钥（仅显示一次）</div>
+            <div className="font-medium mb-1">
+              {t("apiKeys.newToken.title")}
+            </div>
             <div className="font-mono break-all">{newToken}</div>
             <div className="text-xs text-muted-foreground mt-1">
-              请妥善保存。调用 Notify 推荐使用 Authorization: Bearer
-              &lt;token&gt;。
+              {t("apiKeys.newToken.hint")}
             </div>
           </div>
         )}
@@ -113,7 +116,7 @@ export default function ApiKeysPage() {
 
       <div className="flex flex-wrap items-center gap-2">
         <Input
-          placeholder="按名称搜索"
+          placeholder={t("apiKeys.search.placeholder")}
           value={q}
           onChange={(e) => setQ(e.target.value)}
           className="w-64"
@@ -127,7 +130,7 @@ export default function ApiKeysPage() {
           }}
           disabled={loading}
         >
-          搜索
+          {t("apiKeys.search.button")}
         </Button>
       </div>
 
@@ -135,10 +138,16 @@ export default function ApiKeysPage() {
         <table className="min-w-full text-sm">
           <thead className="bg-muted/50">
             <tr>
-              <th className="px-3 py-2 text-left">名称</th>
-              <th className="px-3 py-2 text-left">标识</th>
-              <th className="px-3 py-2 text-left">状态</th>
-              <th className="px-3 py-2 text-left">操作</th>
+              <th className="px-3 py-2 text-left">{t("apiKeys.table.name")}</th>
+              <th className="px-3 py-2 text-left">
+                {t("apiKeys.table.prefix")}
+              </th>
+              <th className="px-3 py-2 text-left">
+                {t("apiKeys.table.status")}
+              </th>
+              <th className="px-3 py-2 text-left">
+                {t("apiKeys.table.actions")}
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -149,7 +158,9 @@ export default function ApiKeysPage() {
                   {it.prefix || ""}...{it.suffix || ""}
                 </td>
                 <td className="px-3 py-2">
-                  {it.status === 1 ? "启用" : "禁用"}
+                  {it.status === 1
+                    ? t("apiKeys.status.enabled")
+                    : t("apiKeys.status.disabled")}
                 </td>
                 <td className="px-3 py-2">
                   <button
@@ -161,13 +172,15 @@ export default function ApiKeysPage() {
                     }}
                     className="text-primary hover:underline mr-3"
                   >
-                    {it.status === 1 ? "禁用" : "启用"}
+                    {it.status === 1
+                      ? t("apiKeys.actions.disable")
+                      : t("apiKeys.actions.enable")}
                   </button>
                   <button
                     onClick={() => onDelete(it.api_key_bid)}
                     className="text-red-600 hover:underline"
                   >
-                    删除
+                    {t("apiKeys.actions.delete")}
                   </button>
                 </td>
               </tr>
@@ -175,7 +188,7 @@ export default function ApiKeysPage() {
             {items.length === 0 && (
               <tr>
                 <td className="px-3 py-4 text-muted-foreground" colSpan={4}>
-                  暂无数据
+                  {t("common.noData")}
                 </td>
               </tr>
             )}
@@ -189,7 +202,7 @@ export default function ApiKeysPage() {
           disabled={offset === 0}
           onClick={() => setOffset(Math.max(0, offset - limit))}
         >
-          上一页
+          {t("apiKeys.pager.prev")}
         </Button>
         <span className="text-sm text-muted-foreground">
           {offset + 1}-{Math.min(offset + limit, total)} / {total}
@@ -199,7 +212,7 @@ export default function ApiKeysPage() {
           disabled={offset + limit >= total}
           onClick={() => setOffset(offset + limit)}
         >
-          下一页
+          {t("apiKeys.pager.next")}
         </Button>
       </div>
     </div>
