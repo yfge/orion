@@ -1,4 +1,4 @@
-% API Keys: management and usage
+# API Keys: management and usage
 
 ## Basics
 

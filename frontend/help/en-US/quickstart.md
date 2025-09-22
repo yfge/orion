@@ -1,4 +1,4 @@
-% Quickstart
+# Quickstart
 
 This page gets you from install to sending a notification in ~10 minutes.
 

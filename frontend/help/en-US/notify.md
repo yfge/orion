@@ -1,4 +1,4 @@
-% Notify API usage and authentication
+# Notify API usage and authentication
 
 ## Interface and auth
 

@@ -1,4 +1,4 @@
-% Endpoints & Dispatches
+# Endpoints & Dispatches
 
 ## Concepts
 

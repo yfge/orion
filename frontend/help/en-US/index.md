@@ -1,4 +1,4 @@
-% Help Center
+# Help Center
 
 Welcome to Orion Notification Gateway. This help covers setup and launch, daily configuration, Open APIs, FAQs, and troubleshooting.
 

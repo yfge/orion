@@ -1,4 +1,4 @@
-% Email adapters (Mailgun/SendGrid/SMTP)
+# Email adapters (Mailgun/SendGrid/SMTP)
 
 ## Adapters
 

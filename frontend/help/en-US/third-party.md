@@ -1,4 +1,4 @@
-% Third‑party integration guide
+# Third‑party integration guide
 
 This guide targets vendors/external systems. It explains Orion concepts, onboarding flow and examples.
 
