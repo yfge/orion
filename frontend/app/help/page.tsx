@@ -17,12 +17,14 @@ export default function HelpIndex() {
   // Load messages for server-side t()
   function loadMessages(loc: string) {
     try {
-      const file = path.join(
+      const p1 = path.join(process.cwd(), "messages", `${loc}.json`);
+      const p2 = path.join(
         process.cwd(),
         "frontend",
         "messages",
         `${loc}.json`,
       );
+      const file = fs.existsSync(p1) ? p1 : p2;
       const raw = fs.readFileSync(file, "utf-8");
       return JSON.parse(raw) as Record<string, string>;
     } catch {
