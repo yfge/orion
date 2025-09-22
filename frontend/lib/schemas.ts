@@ -12,7 +12,10 @@ export function endpointConfigSchemaFor(
         title: "HTTP 方法",
       },
       url: { type: "string", title: "URL" },
-      timeout: { type: "number", title: "超时(秒)" },
+      timeout: {
+        type: "number",
+        title: T("schemas.common.timeout", "超时(秒)"),
+      },
       headers: {
         type: "object",
         title: T("schemas.http.headers", "请求头(键值)"),
@@ -25,8 +28,14 @@ export function endpointConfigSchemaFor(
     return {
       type: "object",
       properties: {
-        url: { type: "string", title: "Webhook URL" },
-        timeout: { type: "number", title: "超时(秒)" },
+        url: {
+          type: "string",
+          title: T("schemas.http.webhookUrl", "Webhook URL"),
+        },
+        timeout: {
+          type: "number",
+          title: T("schemas.common.timeout", "超时(秒)"),
+        },
         headers: {
           type: "object",
           title: T("schemas.http.headersOptional", "请求头(可选)"),
@@ -47,7 +56,10 @@ export function endpointConfigSchemaFor(
         api_key: { type: "string", title: "API Key" },
         from: { type: "string", title: "默认发件人(可选)" },
         to: { type: "string", title: "默认收件人(逗号分隔，可选)" },
-        timeout: { type: "number", title: "超时(秒)" },
+        timeout: {
+          type: "number",
+          title: T("schemas.common.timeout", "超时(秒)"),
+        },
         headers: {
           type: "object",
           title: T("schemas.http.extraHeadersOptional", "额外请求头(可选)"),
@@ -74,7 +86,10 @@ export function endpointConfigSchemaFor(
         api_key: { type: "string", title: "API Key" },
         from: { type: "string", title: "默认发件人(可选)" },
         to: { type: "string", title: "默认收件人(可选)" },
-        timeout: { type: "number", title: "超时(秒)" },
+        timeout: {
+          type: "number",
+          title: T("schemas.common.timeout", "超时(秒)"),
+        },
         headers: {
           type: "object",
           title: T("schemas.http.extraHeadersOptional", "额外请求头(可选)"),
@@ -101,7 +116,10 @@ export function endpointConfigSchemaFor(
         password: { type: "string", title: "密码(可选)" },
         from: { type: "string", title: "默认发件人(可选)" },
         to: { type: "string", title: "默认收件人(逗号分隔，可选)" },
-        timeout: { type: "number", title: "超时(秒)" },
+        timeout: {
+          type: "number",
+          title: T("schemas.common.timeout", "超时(秒)"),
+        },
       },
       required: ["host"],
     };
@@ -112,7 +130,9 @@ export function endpointConfigSchemaFor(
 export function mappingSchemaFor(
   adapterKey?: string | null,
   messageType?: string | null,
+  t?: (k: string) => string,
 ) {
+  const T = (k: string, fallback: string) => (t ? t(k) : fallback);
   if (
     adapterKey?.startsWith("http.feishu") &&
     (messageType === "text" || !messageType)
@@ -120,7 +140,10 @@ export function mappingSchemaFor(
     return {
       type: "object",
       properties: {
-        text: { type: "string", title: "文本内容覆盖(可选)" },
+        text: {
+          type: "string",
+          title: T("schemas.feishu.textOverride", "文本内容覆盖(可选)"),
+        },
       },
     };
   }

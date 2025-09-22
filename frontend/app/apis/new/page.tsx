@@ -76,7 +76,7 @@ export default function NewApiPage() {
     }
   };
 
-  const configSchema = endpointConfigSchemaFor(adapterKey);
+  const configSchema = endpointConfigSchemaFor(adapterKey, t);
 
   if (!mounted) {
     return <div className="container max-w-2xl">{t("common.loading")}</div>;

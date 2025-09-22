@@ -320,6 +320,7 @@ export default function EditEndpointPage() {
                   messageDefs.find(
                     (m: any) => m.message_definition_bid === newMsgBid,
                   )?.type || null,
+                  t,
                 )}
                 formData={newMappingObj}
                 onChange={(val) => {

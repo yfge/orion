@@ -138,5 +138,8 @@
   "apis.validate.button": "校验配置",
   "apis.validate.valid": "配置校验通过",
   "apis.validate.invalidPrefix": "校验失败:",
-  "apis.validate.exception": "校验异常"
+  "apis.validate.exception": "校验异常",
+  "schemas.common.timeout": "超时(秒)",
+  "schemas.http.webhookUrl": "Webhook URL",
+  "schemas.feishu.textOverride": "文本内容覆盖(可选)"
 }
