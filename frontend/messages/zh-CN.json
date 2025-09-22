@@ -141,5 +141,20 @@
   "apis.validate.exception": "校验异常",
   "schemas.common.timeout": "超时(秒)",
   "schemas.http.webhookUrl": "Webhook URL",
-  "schemas.feishu.textOverride": "文本内容覆盖(可选)"
+  "schemas.feishu.textOverride": "文本内容覆盖(可选)",
+  "schemas.http.bodyFormat": "Body 格式",
+  "schemas.email.defaultFrom": "默认发件人(可选)",
+  "schemas.email.defaultTo": "默认收件人(逗号分隔，可选)",
+  "schemas.email.defaultToSimple": "默认收件人(可选)",
+  "schemas.smtp.host": "SMTP 主机",
+  "schemas.smtp.portOptional": "端口(可选)",
+  "schemas.smtp.useTLS": "使用 STARTTLS",
+  "schemas.smtp.useSSL": "使用 SSL",
+  "schemas.smtp.usernameOptional": "用户名(可选)",
+  "schemas.smtp.passwordOptional": "密码(可选)",
+  "schemas.email.fromOptional": "发件人(可选)",
+  "schemas.email.toOptionalDelimited": "收件人(逗号分隔，可选)",
+  "schemas.email.subjectOptional": "主题(可选)",
+  "schemas.email.textOptional": "纯文本正文(可选)",
+  "schemas.email.htmlOptional": "HTML 正文(可选)"
 }
