@@ -10,6 +10,7 @@ from .schema import router as schema_router
 from .send_records import router as send_records_router
 from .systems import router as systems_router
 from .users import router as users_router
+from .wechat_callbacks import router as wechat_callbacks_router
 
 router = APIRouter()
 
@@ -29,3 +30,4 @@ router.include_router(notify_router)
 router.include_router(schema_router)
 router.include_router(send_records_router)
 router.include_router(api_keys_router)
+router.include_router(wechat_callbacks_router)

@@ -82,6 +82,15 @@
 - **状态流转**：沿用网关状态机（pending → sending → success/failed → retrying/abandoned），并在事件中记录状态变化时间戳。
 - **领域事件**：定义 `MessageQueued`, `VendorAccepted`, `VendorFailed`, `RetryScheduled`, `DeliveryConfirmed`, `DeliveryFailed` 等事件，驱动任务队列与告警。
 
+## 适配器与外部集成
+- **Access Token Provider**：使用 httpx 调用 `/cgi-bin/token`，凭据来自配置，成功后写入 `wechat_official_account_tokens`（缓存 expires_at、trace_id、environment）。缓存命中时需判断剩余有效期，TTL < 5 分钟时主动刷新。
+- **消息发送**：封装模板消息 `/cgi-bin/message/template/send` 与客服消息 `/cgi-bin/message/custom/send`，构建请求体（touser、template_id、data、miniprogram/pagepath 等），附带 idempotency key（`client_msg_id`）避免重复。
+- **错误码映射**：维护 `errcode` → 业务异常（认证、频率限制、参数错误等）映射表，转换为领域事件；对 `-1`、`45009` 等系统错误触发重试。
+- **HTTP 客户端**：统一使用带审计的 httpx 客户端（超时 5s，可注入代理），日志记录 trace_id、url、errcode。
+- **回调校验**：实现 `signature = sha1(sort([token, timestamp, nonce]))` 校验，解密 AES 消息留待后续；若启用 AES 模式，需要根据 EncodingAESKey 解密并校验 appId。
+- **Webhook Handler**：暴露 `/api/v1/callbacks/wechat-oa`，支持 GET 验证（echostr）与 POST 消息，入库至 `wechat_official_account_events` 并关联消息聚合。
+
+
 
 ## 开放问题
 - Access Token 缓存介质最终选型？（Redis vs. DB vs. 内存）
