@@ -91,6 +91,15 @@
 - **Webhook Handler**：暴露 `/api/v1/callbacks/wechat-oa`，支持 GET 验证（echostr）与 POST 消息，入库至 `wechat_official_account_events` 并关联消息聚合。
 
 
+## 服务编排与业务流程
+- **入口**：网关接收 `channel=wechat_official_account` 的请求，调用模板渲染器规范化字段（OpenID、模板 ID、数据项、跳转信息、语言）。
+- **消息构建**：生成 `WechatOfficialAccountMessage`，写入 `wechat_official_account_messages`（pending 状态），记录 idempotency key 以支持幂等。
+- **发送流程**：调用适配器发送；成功则更新消息状态为 `success` 并保存 `vendor_msg_id`；失败根据错误分类更新状态（failed/retrying）并触发重试策略。
+- **重试策略**：结合配置的 `retry_policy`，在任务队列触发延迟重试（指数退避），记录下一次尝试时间与原因。
+- **补发/撤回**：补发通过 `RetryScheduled` 事件驱动调用客服消息接口；撤回记录事件并通知业务系统。
+- **可观测性**：每次发送与重试写入 `send_details`，回调事件更新消息状态并触发告警。
+
+
 
 ## 开放问题
 - Access Token 缓存介质最终选型？（Redis vs. DB vs. 内存）

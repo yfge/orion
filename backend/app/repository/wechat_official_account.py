@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+from typing import Any
 
 from sqlalchemy.orm import Session
 
@@ -59,6 +60,90 @@ def mark_token_deleted(db: Session, *, app_id: str) -> None:
     db.flush()
 
 
+def create_message_record(
+    db: Session,
+    *,
+    message_bid: str,
+    send_record_bid: str | None,
+    app_id: str,
+    to_user: str,
+    template_id: str,
+    language: str | None,
+    link_type: str | None,
+    link_url: str | None,
+    mini_program_app_id: str | None,
+    mini_program_path: str | None,
+    data_payload: dict[str, Any] | None,
+    raw_request: dict[str, Any] | None,
+    idempotency_key: str | None,
+    state: str,
+) -> models.WechatOfficialAccountMessage:
+    record = models.WechatOfficialAccountMessage(
+        wechat_message_bid=message_bid,
+        send_record_bid=send_record_bid,
+        app_id=app_id,
+        to_user=to_user,
+        template_id=template_id,
+        language=language,
+        link_type=link_type,
+        link_url=link_url,
+        mini_program_app_id=mini_program_app_id,
+        mini_program_path=mini_program_path,
+        data_payload=data_payload,
+        raw_request=raw_request,
+        state=state,
+        idempotency_key=idempotency_key,
+    )
+    db.add(record)
+    db.flush()
+    return record
+
+
+def update_message_state(
+    db: Session,
+    record: models.WechatOfficialAccountMessage,
+    *,
+    state: str,
+) -> None:
+    record.state = state
+    record.updated_at = datetime.now(timezone.utc)
+    db.flush()
+
+
+def mark_message_success(
+    db: Session,
+    record: models.WechatOfficialAccountMessage,
+    *,
+    vendor_msg_id: str,
+    occurred_at: datetime | None = None,
+) -> None:
+    record.vendor_msg_id = vendor_msg_id
+    record.state = "success"
+    record.last_error_code = None
+    record.last_error_message = None
+    record.last_attempt_at = occurred_at or datetime.now(timezone.utc)
+    record.updated_at = datetime.now(timezone.utc)
+    db.flush()
+
+
+def mark_message_failure(
+    db: Session,
+    record: models.WechatOfficialAccountMessage,
+    *,
+    error_code: int | None,
+    error_message: str | None,
+    retrying: bool,
+    occurred_at: datetime | None = None,
+) -> None:
+    record.last_error_code = error_code
+    record.last_error_message = error_message
+    record.retry_count = (record.retry_count or 0) + 1
+    record.state = "retrying" if retrying else "failed"
+    record.last_attempt_at = occurred_at or datetime.now(timezone.utc)
+    record.updated_at = datetime.now(timezone.utc)
+    db.flush()
+
+
 def get_message_by_vendor_msg_id(
     db: Session,
     *,
@@ -102,3 +187,19 @@ def create_event(
     db.add(record)
     db.flush()
     return record
+
+
+def get_message_by_bid(
+    db: Session,
+    *,
+    message_bid: str,
+) -> models.WechatOfficialAccountMessage | None:
+    return (
+        db.query(models.WechatOfficialAccountMessage)
+        .filter(
+            models.WechatOfficialAccountMessage.wechat_message_bid == message_bid,
+            models.WechatOfficialAccountMessage.is_deleted.is_(False),
+        )
+        .order_by(models.WechatOfficialAccountMessage.id.desc())
+        .first()
+    )

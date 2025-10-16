@@ -155,7 +155,7 @@ class SendRecord(Base, BaseFieldsMixin):
         viewonly=True,
         primaryjoin="foreign(SendDetail.send_record_bid)==SendRecord.send_record_bid",
     )
-    wechat_message: Mapped["WechatOfficialAccountMessage"] = relationship(
+    wechat_message: Mapped["WechatOfficialAccountMessage | None"] = relationship(
         viewonly=True,
         uselist=False,
         primaryjoin="foreign(WechatOfficialAccountMessage.send_record_bid)==SendRecord.send_record_bid",
