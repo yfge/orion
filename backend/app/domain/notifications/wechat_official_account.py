@@ -70,7 +70,7 @@ class WechatCallbackEvent:
     raw_message: str | None = None
 
 
-@dataclass(slots=True)
+@dataclass(slots=True, kw_only=True)
 class WechatDomainEvent:
     message_id: str
     occurred_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))

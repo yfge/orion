@@ -39,8 +39,11 @@ class WechatAccessTokenProvider:
         record = repo.get_token_by_app_id(db, app_id=app_id)
         now = datetime.now(timezone.utc)
         if record and not force_refresh:
+            expires_at = record.expires_at
+            if expires_at and expires_at.tzinfo is None:
+                expires_at = expires_at.replace(tzinfo=timezone.utc)
             # consider valid if not close to expiration
-            remaining = (record.expires_at - now).total_seconds() if record.expires_at else -1
+            remaining = (expires_at - now).total_seconds() if expires_at else -1
             if remaining > self._refresh_margin:
                 logger.debug("wechat token cache hit", extra={"app_id": app_id, "remaining": remaining})
                 return record.access_token

@@ -4,8 +4,13 @@ from typing import Any
 
 try:
     from prometheus_client import Counter, Histogram
+    PROMETHEUS_ENABLED = True
 except Exception:  # pragma: no cover - fallback if prometheus_client unavailable
+    PROMETHEUS_ENABLED = False
     class _NoopMetric:  # type: ignore[too-many-instance-attributes]
+        def __init__(self, *args: Any, **kwargs: Any) -> None:  # noqa: D401
+            return None
+
         def labels(self, *args: Any, **kwargs: Any) -> "_NoopMetric":  # noqa: D401
             return self
 
@@ -16,6 +21,7 @@ except Exception:  # pragma: no cover - fallback if prometheus_client unavailabl
             return None
 
     Counter = Histogram = _NoopMetric  # type: ignore[misc]
+    PROMETHEUS_ENABLED = False
 
 
 _WECHAT_SEND_ATTEMPTS = Counter(
@@ -52,4 +58,5 @@ def record_wechat_callback(event_type: str, status: str) -> None:
 __all__ = [
     "record_wechat_send",
     "record_wechat_callback",
+    "PROMETHEUS_ENABLED",
 ]
