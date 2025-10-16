@@ -107,6 +107,16 @@
 - `POST /api/v1/notifications/wechat/custom`（预留）：客服消息补发接口，复用相同鉴权与记录能力。
 
 
+## 可观测性与报警
+- Metrics：
+  - `orion_wechat_send_attempts_total{result,app_id}` 统计发送成功/失败。
+  - `orion_wechat_send_latency_seconds{app_id}` 记录发送耗时分布。
+  - `orion_wechat_callback_events_total{event_type,status}` 反映回调结果、失败率。
+- Logging：所有发送、失败、回调都输出结构化日志（trace_id, app_id, message_bid, vendor_msg_id, errcode）。
+- Tracing：预留 OpenTelemetry instrumentation，trace id 与业务 request id 关联。
+- Alerting：失败率 > 5% 或连续 5 分钟无回调时触发报警；Access Token 刷新失败即时告警。
+
+
 
 
 ## 开放问题

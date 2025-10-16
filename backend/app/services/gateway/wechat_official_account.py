@@ -4,6 +4,7 @@ import logging
 import uuid
 from dataclasses import dataclass
 from datetime import datetime, timezone
+from time import perf_counter
 from typing import Any
 
 from sqlalchemy.orm import Session
@@ -17,6 +18,7 @@ from ...domain.notifications import (
     WechatOfficialAccountMessage,
     WechatTemplateField,
 )
+from ...observability.metrics import record_wechat_send
 from ...repository import wechat_official_account as repo
 from ...services.templating import render_value
 from .base import ChannelGateway, GatewaySendResult
@@ -95,13 +97,16 @@ class WechatGatewayService(ChannelGateway):
                 idempotency_key=message.idempotency_key,
                 state=message.state.value,
             )
-            repo.update_message_state(db, record, state=WechatNotificationState.SENDING.value)
-        else:
-            repo.update_message_state(db, record, state=WechatNotificationState.SENDING.value)
+        repo.update_message_state(db, record, state=WechatNotificationState.SENDING.value)
 
+        app_id = message.app_id
+        vendor_msg_id: str | None = None
+        started = perf_counter()
         try:
             result = self._client.send_template_message(db, message)
         except WechatAPIError as exc:
+            elapsed = perf_counter() - started
+            record_wechat_send("error", app_id, elapsed, errcode=exc.errcode)
             repo.mark_message_failure(
                 db,
                 record,
@@ -115,10 +120,14 @@ class WechatGatewayService(ChannelGateway):
             logger.warning(
                 "wechat template send failed",
                 extra={
+                    "event": "wechat.template.send.failure",
                     "message_bid": record.wechat_message_bid,
+                    "vendor_msg_id": vendor_msg_id,
+                    "app_id": app_id,
                     "errcode": exc.errcode,
                     "errmsg": exc.errmsg,
                     "retry_scheduled": retry_scheduled,
+                    "latency_ms": round(elapsed * 1000, 2),
                 },
             )
             return GatewaySendResult(
@@ -128,12 +137,38 @@ class WechatGatewayService(ChannelGateway):
                 error=exc.errmsg,
                 retry_scheduled=retry_scheduled,
             )
+        except Exception:
+            elapsed = perf_counter() - started
+            record_wechat_send("exception", app_id, elapsed)
+            logger.exception(
+                "wechat template send exception",
+                extra={
+                    "event": "wechat.template.send.exception",
+                    "message_bid": record.wechat_message_bid,
+                    "app_id": app_id,
+                    "latency_ms": round(elapsed * 1000, 2),
+                },
+            )
+            raise
 
-        repo.mark_message_success(db, record, vendor_msg_id=result.msg_id or "")
+        elapsed = perf_counter() - started
+        record_wechat_send("success", app_id, elapsed, errcode=0)
+        vendor_msg_id = result.msg_id or ""
+        repo.mark_message_success(db, record, vendor_msg_id=vendor_msg_id)
+        logger.info(
+            "wechat template send success",
+            extra={
+                "event": "wechat.template.send.success",
+                "message_bid": record.wechat_message_bid,
+                "vendor_msg_id": vendor_msg_id,
+                "app_id": app_id,
+                "latency_ms": round(elapsed * 1000, 2),
+            },
+        )
         return GatewaySendResult(
             success=True,
             message_bid=record.wechat_message_bid,
-            vendor_msg_id=result.msg_id,
+            vendor_msg_id=vendor_msg_id,
             state=WechatNotificationState.SUCCESS.value,
         )
 
@@ -143,6 +178,7 @@ class WechatGatewayService(ChannelGateway):
         app_id = request.app_id or self._config.app_id
         if not app_id:
             raise ValueError("app_id is required")
+        started = perf_counter()
         try:
             result = self._client.send_custom_message(
                 db,
@@ -150,17 +186,52 @@ class WechatGatewayService(ChannelGateway):
                 app_id=app_id,
             )
         except WechatAPIError as exc:
+            elapsed = perf_counter() - started
+            record_wechat_send("error", app_id, elapsed, errcode=exc.errcode)
+            retry_scheduled = exc.retryable and self._schedule_retry(db, None)
             logger.warning(
                 "wechat custom message failed",
-                extra={"errcode": exc.errcode, "errmsg": exc.errmsg},
+                extra={
+                    "event": "wechat.custom.send.failure",
+                    "app_id": app_id,
+                    "errcode": exc.errcode,
+                    "errmsg": exc.errmsg,
+                    "retry_scheduled": retry_scheduled,
+                    "latency_ms": round(elapsed * 1000, 2),
+                },
             )
             return GatewaySendResult(
                 success=False,
                 message_bid="",
                 error=exc.errmsg,
-                retry_scheduled=exc.retryable and self._schedule_retry(db, None),
+                retry_scheduled=retry_scheduled,
             )
-        return GatewaySendResult(success=result.success, message_bid="", vendor_msg_id=result.msg_id, state="success" if result.success else "failed")
+        except Exception:
+            elapsed = perf_counter() - started
+            record_wechat_send("exception", app_id, elapsed)
+            logger.exception(
+                "wechat custom message exception",
+                extra={
+                    "event": "wechat.custom.send.exception",
+                    "app_id": app_id,
+                    "latency_ms": round(elapsed * 1000, 2),
+                },
+            )
+            raise
+
+        elapsed = perf_counter() - started
+        result_state = "success" if result.success else "failed"
+        record_wechat_send("success" if result.success else "error", app_id, elapsed, errcode=0 if result.success else None)
+        logger.info(
+            "wechat custom message sent",
+            extra={
+                "event": "wechat.custom.send.success" if result.success else "wechat.custom.send.accepted",
+                "app_id": app_id,
+                "vendor_msg_id": result.msg_id,
+                "latency_ms": round(elapsed * 1000, 2),
+            },
+        )
+        return GatewaySendResult(success=result.success, message_bid="", vendor_msg_id=result.msg_id, state=result_state)
 
     def _build_domain_message(
         self,
