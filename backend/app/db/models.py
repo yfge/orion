@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import JSON, Boolean, DateTime, Integer, SmallInteger, String, Text, func
+from sqlalchemy import JSON, Boolean, DateTime, Integer, SmallInteger, String, Text, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base
@@ -155,6 +155,11 @@ class SendRecord(Base, BaseFieldsMixin):
         viewonly=True,
         primaryjoin="foreign(SendDetail.send_record_bid)==SendRecord.send_record_bid",
     )
+    wechat_message: Mapped["WechatOfficialAccountMessage"] = relationship(
+        viewonly=True,
+        uselist=False,
+        primaryjoin="foreign(WechatOfficialAccountMessage.send_record_bid)==SendRecord.send_record_bid",
+    )
 
 
 class SendDetail(Base, BaseFieldsMixin):
@@ -206,3 +211,82 @@ class ApiKey(Base, BaseFieldsMixin):
         String(16), nullable=True
     )  # last 4-6 chars for display
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+
+
+class WechatOfficialAccountToken(Base, BaseFieldsMixin):
+    __tablename__ = "wechat_official_account_tokens"
+    __table_args__ = (
+        UniqueConstraint("app_id", name="uq_wechat_official_account_tokens_app_id"),
+    )
+
+    wechat_token_bid: Mapped[str] = mapped_column(
+        String(32), unique=True, index=True, default=gen_bid, nullable=False
+    )
+    app_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    access_token: Mapped[str] = mapped_column(String(512), nullable=False)
+    expires_at: Mapped[DateTime] = mapped_column(DateTime, nullable=False)
+    fetched_at: Mapped[DateTime] = mapped_column(DateTime, server_default=func.now(), nullable=False)
+    environment: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    trace_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+
+
+class WechatOfficialAccountMessage(Base, BaseFieldsMixin):
+    __tablename__ = "wechat_official_account_messages"
+    __table_args__ = (
+        UniqueConstraint(
+            "send_record_bid", name="uq_wechat_official_account_messages_send_record_bid"
+        ),
+    )
+
+    wechat_message_bid: Mapped[str] = mapped_column(
+        String(32), unique=True, index=True, default=gen_bid, nullable=False
+    )
+    send_record_bid: Mapped[str] = mapped_column(String(32), index=True, nullable=False)
+    app_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    to_user: Mapped[str] = mapped_column(String(128), nullable=False)
+    template_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    language: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    link_type: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    link_url: Mapped[str | None] = mapped_column(String(1024), nullable=True)
+    mini_program_app_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    mini_program_path: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    data_payload: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    raw_request: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    state: Mapped[str] = mapped_column(String(32), nullable=False, default="pending")
+    vendor_msg_id: Mapped[str | None] = mapped_column(String(64), index=True, nullable=True)
+    last_error_code: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    last_error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
+    retry_count: Mapped[int] = mapped_column(Integer, server_default="0", nullable=False)
+    queued_at: Mapped[DateTime] = mapped_column(DateTime, server_default=func.now(), nullable=False)
+    last_attempt_at: Mapped[DateTime | None] = mapped_column(DateTime, nullable=True)
+    idempotency_key: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
+
+    events: Mapped[list["WechatOfficialAccountEvent"]] = relationship(
+        back_populates="message",
+        viewonly=True,
+        primaryjoin="foreign(WechatOfficialAccountEvent.wechat_message_bid)==WechatOfficialAccountMessage.wechat_message_bid",
+    )
+
+
+class WechatOfficialAccountEvent(Base, BaseFieldsMixin):
+    __tablename__ = "wechat_official_account_events"
+
+    wechat_event_bid: Mapped[str] = mapped_column(
+        String(32), unique=True, index=True, default=gen_bid, nullable=False
+    )
+    wechat_message_bid: Mapped[str | None] = mapped_column(String(32), index=True, nullable=True)
+    vendor_msg_id: Mapped[str | None] = mapped_column(String(64), index=True, nullable=True)
+    event_type: Mapped[str] = mapped_column(String(64), nullable=False)
+    status_text: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    error_code: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
+    occurred_at: Mapped[DateTime] = mapped_column(DateTime, nullable=False)
+    payload: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    raw_message: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    message: Mapped[WechatOfficialAccountMessage | None] = relationship(
+        back_populates="events",
+        viewonly=True,
+        primaryjoin="foreign(WechatOfficialAccountEvent.wechat_message_bid)==WechatOfficialAccountMessage.wechat_message_bid",
+    )

@@ -74,6 +74,15 @@
 - 错误码分级：可重试代码默认包含 `-1`、`45009`、`50002`；不可重试代码默认包含授权/参数类错误（如 `40001`、`40037`、`48001` 等）。
 - 环境变量使用 `ORION_WECHAT_OFFICIAL_ACCOUNT__<字段>` 形式覆写，满足 Pydantic 嵌套配置加载约定。
 
+## 域模型与存储设计
+- **实体**：`WechatOfficialAccountMessage` 聚合消息体（模板 ID、接收人 OpenID、跳转类型、数据字段、供应商 msgid、网关状态、失败原因）。
+- **凭证缓存**：`WechatAccessTokenSnapshot` 基于 AppID 存储最新 Access Token、过期时间和刷新时间，并记录来源环境。
+- **回执事件**：`WechatCallbackEvent` 记录微信推送事件（送达、撤回、用户行为等），保留原始 payload 及解析后的关键字段。
+- **关联关系**：消息实体与 `send_records`/`send_details` 通过 send_record_bid 关联，保证跨通道统一追踪；回执事件与消息实体通过 msgid/内部 id 关联。
+- **状态流转**：沿用网关状态机（pending → sending → success/failed → retrying/abandoned），并在事件中记录状态变化时间戳。
+- **领域事件**：定义 `MessageQueued`, `VendorAccepted`, `VendorFailed`, `RetryScheduled`, `DeliveryConfirmed`, `DeliveryFailed` 等事件，驱动任务队列与告警。
+
+
 ## 开放问题
 - Access Token 缓存介质最终选型？（Redis vs. DB vs. 内存）
 - 是否需要同时支持订阅号（限制模板消息能力）？
