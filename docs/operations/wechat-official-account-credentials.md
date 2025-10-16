@@ -68,6 +68,7 @@
 
 ## 可观测性参考
 - 指标与报警请见 `docs/operations/wechat-official-account-observability.md`.
+- 故障处理流程参见 `docs/operations/wechat-official-account-runbook.md`.
 
 ## 常见问题
 - **Access Token 频繁过期**：检查是否存在多进程重复刷新，建议集中在适配器中处理缓存。

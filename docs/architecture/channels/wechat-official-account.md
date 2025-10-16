@@ -106,6 +106,13 @@
 - `GET /api/v1/notifications/wechat`（预留）：按业务系统/状态分页检索消息列表。
 - `POST /api/v1/notifications/wechat/custom`（预留）：客服消息补发接口，复用相同鉴权与记录能力。
 
+## 实施状态与测试
+- 适配器、网关、API 已实现并通过 `pytest tests/test_wechat_channel.py` 单元测试验证。
+- Token Provider 支持缓存与过期刷新；网关目前使用同步发送，重试调度待与任务队列集成。
+- Prometheus 指标默认注册在进程中，需在 FastAPI 层暴露 scrape endpoint。
+- 运行前需准备 `.env` 中的 AppID/AppSecret/Token，并在 Vault 中同步。
+
+
 
 ## 可观测性与报警
 - Metrics：
