@@ -99,6 +99,14 @@
 - **补发/撤回**：补发通过 `RetryScheduled` 事件驱动调用客服消息接口；撤回记录事件并通知业务系统。
 - **可观测性**：每次发送与重试写入 `send_details`，回调事件更新消息状态并触发告警。
 
+## API 设计
+- `POST /api/v1/notifications/wechat/template`：同步发送模板消息，返回 `message_bid`、状态与 `vendor_msg_id`。
+- `GET /api/v1/notifications/wechat/{message_bid}`：查询单条公众号消息的状态、错误信息与模板参数。
+- `POST /api/v1/notifications/wechat/{message_bid}/retry`：触发手动重试（若当前状态允许重试），返回重试计划信息。
+- `GET /api/v1/notifications/wechat`（预留）：按业务系统/状态分页检索消息列表。
+- `POST /api/v1/notifications/wechat/custom`（预留）：客服消息补发接口，复用相同鉴权与记录能力。
+
+
 
 
 ## 开放问题
