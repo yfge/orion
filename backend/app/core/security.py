@@ -19,11 +19,24 @@ def get_secret_key() -> str:
     return getattr(settings, "SECRET_KEY", None) or "dev-secret-change-me"
 
 
+def _truncate_password(password: str) -> str:
+    """Truncate password to 72 bytes for bcrypt compatibility."""
+    # bcrypt has a maximum password length of 72 bytes
+    # Encode to bytes, truncate, then decode back to string
+    password_bytes = password.encode('utf-8')
+    if len(password_bytes) > 72:
+        # Truncate to 72 bytes and decode, ignoring errors
+        password_bytes = password_bytes[:72]
+    return password_bytes.decode('utf-8', errors='ignore')
+
+
 def hash_password(password: str) -> str:
+    password = _truncate_password(password)
     return pwd_context.hash(password)
 
 
 def verify_password(password: str, hashed: str) -> bool:
+    password = _truncate_password(password)
     return pwd_context.verify(password, hashed)
 
 
