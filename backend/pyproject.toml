@@ -27,6 +27,7 @@ dependencies = [
   # Auth
   "PyJWT>=2.8.0",
   "passlib[bcrypt]>=1.7.4",
+  "bcrypt>=4.0.0,<5.0.0",  # Pin to 4.x for passlib compatibility
 ]
 
 [project.optional-dependencies]

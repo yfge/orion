@@ -157,6 +157,31 @@ export function endpointConfigSchemaFor(
       required: ["host"],
     };
   }
+  if (adapterKey === "channel.wechat_official_account") {
+    return {
+      type: "object",
+      properties: {
+        app_id: {
+          type: "string",
+          title: T("schemas.wechat.appId", "微信AppID"),
+        },
+        app_secret: {
+          type: "string",
+          title: T("schemas.wechat.appSecret", "微信AppSecret"),
+        },
+        language: {
+          type: "string",
+          title: T("schemas.wechat.language", "语言(zh_CN/en_US)"),
+          default: "zh_CN",
+        },
+        timeout: {
+          type: "number",
+          title: T("schemas.common.timeout", "超时(秒)"),
+        },
+      },
+      required: ["app_id", "app_secret"],
+    };
+  }
   return baseHttp;
 }
 
@@ -219,6 +244,37 @@ export function mappingSchemaFor(
           type: "string",
           title: T("schemas.email.htmlOptional", "HTML 正文(可选)"),
           format: "textarea",
+        },
+      },
+    };
+  }
+  if (adapterKey === "channel.wechat_official_account") {
+    return {
+      type: "object",
+      properties: {
+        link: {
+          type: "object",
+          title: T("schemas.wechat.link", "跳转链接配置(可选)"),
+          properties: {
+            type: {
+              type: "string",
+              title: T("schemas.wechat.linkType", "链接类型"),
+              enum: ["url", "miniprogram"],
+              default: "url",
+            },
+            url: {
+              type: "string",
+              title: T("schemas.wechat.linkUrl", "跳转URL"),
+            },
+            appid: {
+              type: "string",
+              title: T("schemas.wechat.miniprogramAppid", "小程序AppID(小程序链接时必填)"),
+            },
+            pagepath: {
+              type: "string",
+              title: T("schemas.wechat.miniprogramPagepath", "小程序页面路径(小程序链接时必填)"),
+            },
+          },
         },
       },
     };

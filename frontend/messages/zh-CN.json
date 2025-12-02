@@ -278,5 +278,14 @@
   "schemas.email.toOptionalDelimited": "收件人(逗号分隔，可选)",
   "schemas.email.subjectOptional": "主题(可选)",
   "schemas.email.textOptional": "纯文本正文(可选)",
-  "schemas.email.htmlOptional": "HTML 正文(可选)"
+  "schemas.email.htmlOptional": "HTML 正文(可选)",
+  "schemas.wechat.appId": "微信 AppID",
+  "schemas.wechat.appSecret": "微信 AppSecret",
+  "schemas.wechat.language": "语言(zh_CN/en_US)",
+  "schemas.wechat.link": "跳转链接配置(可选)",
+  "schemas.wechat.linkType": "链接类型",
+  "schemas.wechat.linkUrl": "跳转URL",
+  "schemas.wechat.miniprogramAppid": "小程序AppID(小程序链接时必填)",
+  "schemas.wechat.miniprogramPagepath": "小程序页面路径(小程序链接时必填)",
+  "apis.fields.apiUrl": "API 地址"
 }

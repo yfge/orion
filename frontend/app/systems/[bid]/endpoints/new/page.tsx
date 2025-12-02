@@ -57,6 +57,7 @@ export default function NewEndpointPage() {
   const adapterOptions: Record<string, string[]> = {
     http: ["http.generic", "http.feishu_bot"],
     mq: ["mq.kafka", "mq.rabbit"],
+    channel: ["channel.wechat_official_account"],
   };
 
   // load auth profiles
@@ -100,6 +101,7 @@ export default function NewEndpointPage() {
             >
               <option value="http">http</option>
               <option value="mq">mq</option>
+              <option value="channel">channel</option>
             </select>
           </div>
           <div className="space-y-1">

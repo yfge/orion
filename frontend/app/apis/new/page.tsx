@@ -144,11 +144,13 @@ export default function NewApiPage() {
                 setTransport(v);
                 if (v === "http") setAdapterKey("http.generic");
                 if (v === "smtp") setAdapterKey("smtp.generic");
+                if (v === "channel") setAdapterKey("channel.wechat_official_account");
               }}
             >
               <option value="http">http</option>
               <option value="smtp">smtp</option>
               <option value="mq">mq</option>
+              <option value="channel">channel</option>
             </select>
           </div>
           <div className="space-y-1">
@@ -170,6 +172,10 @@ export default function NewApiPage() {
                 <>
                   <option value="smtp.generic">smtp.generic</option>
                 </>
+              ) : transport === "channel" ? (
+                <>
+                  <option value="channel.wechat_official_account">channel.wechat_official_account</option>
+                </>
               ) : (
                 <>
                   <option value="mq.kafka">mq.kafka</option>
@@ -180,14 +186,16 @@ export default function NewApiPage() {
           </div>
         </div>
 
-        {transport === "http" && (
+        {(transport === "http" || transport === "channel") && (
           <div className="space-y-1">
-            <Label htmlFor="url">{t("apis.fields.httpUrl")}</Label>
+            <Label htmlFor="url">
+              {transport === "channel" ? t("apis.fields.apiUrl") : t("apis.fields.httpUrl")}
+            </Label>
             <Input
               id="url"
               value={endpointUrl}
               onChange={(e) => setEndpointUrl(e.target.value)}
-              placeholder="https://..."
+              placeholder={transport === "channel" ? "https://api.weixin.qq.com" : "https://..."}
             />
           </div>
         )}
