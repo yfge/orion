@@ -9,10 +9,11 @@ This repo demonstrates an ai-coding & vibe-coding workflow — documentation-fir
 ## Status & Key Features
 
 - Message Definitions: define message schema (JSON with ${var} templating).
-- Endpoints: HTTP/MQ endpoints with adapter_key and config (e.g., http.feishu_bot).
+- Endpoints: HTTP/MQ/channel endpoints with adapter_key and config (e.g., http.feishu_bot, channel.wechat_official_account).
 - Dispatch Mapping: map a message to many endpoints (BID-first relations).
 - Notify API: POST /api/v1/notify with message_name or message_definition_bid + data.
 - Feishu E2E: endpoint edit page offers “send test” to a Feishu bot webhook.
+- WeChat Official Account channel: unified templating + gateway, including retry/metrics.
 - Auth profiles: CRUD ready; attach to endpoints (future auth providers wiring).
 - Frontend console: manage systems, endpoints, messages, and mappings.
 
@@ -87,6 +88,31 @@ This repo demonstrates an ai-coding & vibe-coding workflow — documentation-fir
   - Create endpoint: transport=smtp, adapter_key=smtp.generic
   - Config: `host`, optional `port`, `use_tls`/`use_ssl`, optional `username`/`password`, default `from`/`to`
   - Send test sends a simple email with subject "Orion Test" and text from input; mapping also supports `subject`, `text`, `html`, `from`, `to`
+
+### WeChat Official Account channel
+
+- Endpoint:
+  - `transport=channel, adapter_key=channel.wechat_official_account`
+  - Config: `app_id`, `app_secret`, `language` (e.g. `zh_CN`)
+- Message Definition:
+  - Store a template-style payload for WeChat:
+    ```json
+    {
+      "template_id": "TM00000001",
+      "to_user": "${openid}",
+      "data": {
+        "first": { "value": "Booking result" },
+        "time": { "value": "${time}" }
+      },
+      "link": {
+        "type": "url",
+        "url": "${link_url}"
+      }
+    }
+    ```
+- Dispatch & Notify:
+  - Bind the message to the WeChat endpoint.
+  - Call `/api/v1/notify/` with `data` providing `openid/time/link_url/...`; Orion renders the template, merges endpoint config, and sends via the `wechat_official_account` gateway.
 
 ## Frontend Setup
 
