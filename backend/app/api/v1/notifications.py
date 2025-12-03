@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
+from ...core.config import settings
 from ...deps.api_key import require_api_key
 from ...deps.db import get_db
 from ...repository import wechat_official_account as repo
@@ -46,7 +47,14 @@ def send_template_message(
         "language": payload.language,
         "idempotency_key": payload.idempotency_key,
         "app_id": payload.app_id,
+        "app_secret": payload.app_secret,
     }
+    if not gateway_payload["app_id"]:
+        gateway_payload["app_id"] = settings.WECHAT_OFFICIAL_ACCOUNT.app_id
+    if not gateway_payload.get("app_secret"):
+        gateway_payload["app_secret"] = settings.WECHAT_OFFICIAL_ACCOUNT.app_secret
+    if not gateway_payload["app_id"] or not gateway_payload.get("app_secret"):
+        raise HTTPException(status_code=400, detail="app_id/app_secret not configured for WeChat")
     try:
         result = gateway.send(db, gateway_payload)
         db.commit()

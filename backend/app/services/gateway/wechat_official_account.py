@@ -37,6 +37,7 @@ class WechatSendPayload:
     language: str | None = None
     idempotency_key: str | None = None
     app_id: str | None = None
+    app_secret: str | None = None
     message_type: str = "template"
     custom_payload: dict[str, Any] | None = None
 
@@ -49,7 +50,56 @@ class WechatGatewayService(ChannelGateway):
         self._config = settings.WECHAT_OFFICIAL_ACCOUNT
 
     def send(self, db: Session, payload: dict[str, Any]) -> GatewaySendResult:
-        request = WechatSendPayload(**payload)
+        def normalize(p: dict[str, Any]) -> dict[str, Any]:
+            normalized: dict[str, Any] = {}
+            for k, v in (p or {}).items():
+                if k in {"touser", "to_user"}:
+                    normalized["to_user"] = v
+                elif k in {"openid"}:
+                    normalized["to_user"] = v
+                elif k in {"appid", "app_id"}:
+                    normalized["app_id"] = v
+                elif k in {"appsecret", "app_secret"}:
+                    normalized["app_secret"] = v
+                elif k in {"client_msg_id", "idempotency_key"}:
+                    normalized["idempotency_key"] = v
+                else:
+                    normalized[k] = v
+            return normalized
+
+        allowed_fields = {
+            "template_id",
+            "to_user",
+            "data",
+            "context",
+            "link",
+            "language",
+            "idempotency_key",
+            "app_id",
+            "app_secret",
+            "message_type",
+            "custom_payload",
+        }
+        filtered_payload = {
+          k: v for k, v in normalize(payload).items() if k in allowed_fields
+        }
+        # Default context to empty dict to allow template rendering
+        if "context" not in filtered_payload:
+            filtered_payload["context"] = {}
+        # Fallback: if to_user missing, try from context.openid
+        if "to_user" not in filtered_payload:
+            ctx_openid = None
+            if isinstance(filtered_payload.get("context"), dict):
+                ctx_openid = filtered_payload["context"].get("openid")
+            if ctx_openid:
+                filtered_payload["to_user"] = ctx_openid
+        request = WechatSendPayload(**filtered_payload)
+        if not request.app_id:
+            request.app_id = self._config.app_id
+        if not request.app_secret:
+            request.app_secret = self._config.app_secret
+        if not request.app_id or not request.app_secret:
+            raise ValueError("app_id and app_secret are required")
         if request.message_type == "custom":
             return self._send_custom_message(db, request)
         return self._send_template_message(db, request)
@@ -103,7 +153,9 @@ class WechatGatewayService(ChannelGateway):
         vendor_msg_id: str | None = None
         started = perf_counter()
         try:
-            result = self._client.send_template_message(db, message)
+            result = self._client.send_template_message(
+                db, message, app_secret=request.app_secret
+            )
         except WechatAPIError as exc:
             elapsed = perf_counter() - started
             record_wechat_send("error", app_id, elapsed, errcode=exc.errcode)
@@ -296,6 +348,7 @@ class WechatGatewayService(ChannelGateway):
             "app_id": request.app_id,
             "message_type": request.message_type,
             "custom_payload": request.custom_payload,
+            # app_secret intentionally omitted to avoid persisting secrets
         }
 
     def _schedule_retry(self, db: Session, message_bid: str | None) -> bool:  # pragma: no cover - scheduler to be implemented

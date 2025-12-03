@@ -285,6 +285,10 @@
   "schemas.wechat.link": "跳转链接配置(可选)",
   "schemas.wechat.linkType": "链接类型",
   "schemas.wechat.linkUrl": "跳转URL",
+  "schemas.wechat.touser": "用户OpenID",
+  "schemas.wechat.templateId": "模板ID",
+  "schemas.wechat.data": "模板数据",
+  "schemas.wechat.dataDesc": "键为模板字段名，value/color 按需填写",
   "schemas.wechat.miniprogramAppid": "小程序AppID(小程序链接时必填)",
   "schemas.wechat.miniprogramPagepath": "小程序页面路径(小程序链接时必填)",
   "apis.fields.apiUrl": "API 地址"

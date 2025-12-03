@@ -54,12 +54,6 @@ export default function NewEndpointPage() {
     }
   };
 
-  const adapterOptions: Record<string, string[]> = {
-    http: ["http.generic", "http.feishu_bot"],
-    mq: ["mq.kafka", "mq.rabbit"],
-    channel: ["channel.wechat_official_account"],
-  };
-
   // load auth profiles
   useEffect(() => {
     (async () => {
@@ -71,6 +65,18 @@ export default function NewEndpointPage() {
       }
     })();
   }, []);
+
+  const adapterOptions: Record<string, string[]> = {
+    http: ["http.generic", "http.feishu_bot", "http.mailgun", "http.sendgrid"],
+    mq: ["mq.kafka", "mq.rabbit"],
+    channel: ["channel.wechat_official_account"],
+  };
+  const optionsForSelect = Array.from(
+    new Set([
+      ...(adapterOptions[transport] || []),
+      ...(transport !== "channel" ? adapterOptions.channel : []),
+    ]),
+  );
 
   return (
     <div className="container max-w-2xl">
@@ -95,8 +101,12 @@ export default function NewEndpointPage() {
               className="border rounded-md h-9 px-3 text-sm w-full"
               value={transport}
               onChange={(e) => {
-                setTransport(e.target.value);
-                setAdapterKey("");
+                const nextTransport = e.target.value;
+                const presets = adapterOptions[nextTransport] || [];
+                setTransport(nextTransport);
+                if (!adapterKey || !presets.includes(adapterKey)) {
+                  setAdapterKey(presets[0] || "");
+                }
               }}
             >
               <option value="http">http</option>
@@ -110,12 +120,18 @@ export default function NewEndpointPage() {
               id="adapterKey"
               className="border rounded-md h-9 px-3 text-sm w-full"
               value={adapterKey}
-              onChange={(e) => setAdapterKey(e.target.value)}
+              onChange={(e) => {
+                const nextAdapter = e.target.value;
+                setAdapterKey(nextAdapter);
+                if (nextAdapter.startsWith("channel.")) {
+                  setTransport("channel");
+                }
+              }}
             >
               <option value="">
                 {t("endpoints.fields.adapter.placeholder")}
               </option>
-              {(adapterOptions[transport] || []).map((opt) => (
+              {optionsForSelect.map((opt) => (
                 <option key={opt} value={opt}>
                   {opt}
                 </option>
@@ -124,12 +140,18 @@ export default function NewEndpointPage() {
           </div>
         </div>
         <div className="space-y-1">
-          <Label htmlFor="endpointUrl">{t("endpoints.fields.httpUrl")}</Label>
+          <Label htmlFor="endpointUrl">
+            {transport === "channel"
+              ? t("apis.fields.apiUrl")
+              : t("endpoints.fields.httpUrl")}
+          </Label>
           <Input
             id="endpointUrl"
             value={endpointUrl}
             onChange={(e) => setEndpointUrl(e.target.value)}
-            placeholder="https://..."
+            placeholder={
+              transport === "channel" ? "https://api.weixin.qq.com" : "https://..."
+            }
           />
         </div>
         <div className="space-y-1">

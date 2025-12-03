@@ -1,3 +1,31 @@
+function inferSchemaFromTemplate(tpl: any): any {
+  if (tpl === null || tpl === undefined) return { type: "string" };
+  if (Array.isArray(tpl)) {
+    const first = tpl[0];
+    return { type: "array", items: inferSchemaFromTemplate(first) };
+  }
+  if (typeof tpl === "object") {
+    const properties: Record<string, any> = {};
+    Object.entries(tpl).forEach(([k, v]) => {
+      properties[k] = inferSchemaFromTemplate(v);
+    });
+    return {
+      type: "object",
+      properties,
+      required: Object.keys(properties),
+    };
+  }
+  if (typeof tpl === "number") return { type: "number" };
+  if (typeof tpl === "boolean") return { type: "boolean" };
+  return { type: "string" };
+}
+
+function normalizeMessageSchema(schema: any): any | null {
+  if (!schema || typeof schema !== "object") return null;
+  if (schema.type || schema.properties || schema.items) return schema;
+  return inferSchemaFromTemplate(schema);
+}
+
 export function endpointConfigSchemaFor(
   adapterKey?: string | null,
   t?: (k: string) => string,
@@ -189,8 +217,13 @@ export function mappingSchemaFor(
   adapterKey?: string | null,
   messageType?: string | null,
   t?: (k: string) => string,
+  messageSchema?: any | null,
 ) {
   const T = (k: string, fallback: string) => (t ? t(k) : fallback);
+  const normalizedSchema = normalizeMessageSchema(messageSchema);
+  if (normalizedSchema) {
+    return normalizedSchema;
+  }
   if (
     adapterKey?.startsWith("http.feishu") &&
     (messageType === "text" || !messageType)
@@ -252,6 +285,30 @@ export function mappingSchemaFor(
     return {
       type: "object",
       properties: {
+        touser: {
+          type: "string",
+          title: T("schemas.wechat.touser", "用户OpenID"),
+        },
+        template_id: {
+          type: "string",
+          title: T("schemas.wechat.templateId", "模板ID"),
+        },
+        data: {
+          type: "object",
+          title: T("schemas.wechat.data", "模板数据"),
+          description: T(
+            "schemas.wechat.dataDesc",
+            "键值为模板字段名，value/color 按需填写",
+          ),
+          additionalProperties: {
+            type: "object",
+            properties: {
+              value: { type: "string", title: "value" },
+              color: { type: "string", title: "color(可选)" },
+            },
+            required: ["value"],
+          },
+        },
         link: {
           type: "object",
           title: T("schemas.wechat.link", "跳转链接配置(可选)"),

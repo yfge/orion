@@ -12,6 +12,7 @@ import {
   deleteEndpoint,
   listAuthProfiles,
   sendTestToEndpoint,
+  sendWechatTemplateTest,
   listDispatchesByEndpoint,
   listMessageDefs,
   createDispatchForEndpoint,
@@ -46,6 +47,22 @@ export default function EditEndpointPage() {
   const [newMappingText, setNewMappingText] = useState("{}");
   const [newMappingObj, setNewMappingObj] = useState<any>({});
   const [newEnabled, setNewEnabled] = useState(true);
+  const [wechatTestMsgBid, setWechatTestMsgBid] = useState("");
+  const [wechatTestSchema, setWechatTestSchema] = useState<any>({});
+  const [wechatTestPayloadObj, setWechatTestPayloadObj] = useState<any>({});
+  const [wechatTestPayloadText, setWechatTestPayloadText] = useState("{}");
+  const [wechatTestError, setWechatTestError] = useState<string | null>(null);
+  const [wechatTestApiKey, setWechatTestApiKey] = useState("");
+  const [wechatTestResult, setWechatTestResult] = useState<string | null>(null);
+  const [wechatTestLoading, setWechatTestLoading] = useState(false);
+
+  const adapterOptions: Record<string, string[]> = {
+    http: ["http.generic", "http.feishu_bot", "http.mailgun", "http.sendgrid"],
+    mq: ["mq.kafka", "mq.rabbit"],
+    channel: ["channel.wechat_official_account"],
+  };
+  const availableAdapters = adapterOptions[transport] || [];
+  const adapterListId = `adapter-options-${transport || "none"}`;
 
   useEffect(() => {
     const load = async () => {
@@ -85,6 +102,17 @@ export default function EditEndpointPage() {
       } catch {}
     })();
   }, [endpointBid]);
+
+  useEffect(() => {
+    if (!messageDefs.length) return;
+    const def = messageDefs.find(
+      (m: any) => m.message_definition_bid === wechatTestMsgBid,
+    );
+    const schemaObj = def?.schema || {};
+    setWechatTestSchema(schemaObj);
+    setWechatTestPayloadObj({});
+    setWechatTestPayloadText("{}");
+  }, [wechatTestMsgBid, messageDefs]);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -155,6 +183,46 @@ export default function EditEndpointPage() {
     }
   };
 
+  const onSendWechatTest = async () => {
+    setWechatTestLoading(true);
+    setWechatTestResult(null);
+    setWechatTestError(null);
+    try {
+      const payload =
+        wechatTestPayloadObj ??
+        (wechatTestPayloadText ? JSON.parse(wechatTestPayloadText) : {});
+      const enriched = {
+        adapter_key: adapterKey || "channel.wechat_official_account",
+        ...payload,
+      };
+      // If app_id / language not provided in payload, fallback to endpoint config
+      if (!enriched.app_id && typeof configObj === "object") {
+        enriched.app_id = (configObj as any)?.app_id;
+      }
+      if (!enriched.app_secret && typeof configObj === "object") {
+        enriched.app_secret = (configObj as any)?.app_secret;
+      }
+      if (!enriched.language && typeof configObj === "object") {
+        enriched.language = (configObj as any)?.language;
+      }
+      // Provide context to render templates in data if user未显式填写
+      if (!enriched.context && typeof enriched === "object") {
+        enriched.context = enriched.context || {};
+      }
+      const res = await sendWechatTemplateTest(
+        enriched,
+        wechatTestApiKey || undefined,
+      );
+      setWechatTestResult(
+        typeof res === "string" ? res : JSON.stringify(res, null, 2),
+      );
+    } catch (e: any) {
+      setWechatTestError(e.message || "发送失败");
+    } finally {
+      setWechatTestLoading(false);
+    }
+  };
+
   if (loading && !name)
     return <div className="container">{t("common.loading")}</div>;
 
@@ -187,10 +255,21 @@ export default function EditEndpointPage() {
               id="transport"
               className="border rounded-md h-9 px-3 text-sm w-full"
               value={transport}
-              onChange={(e) => setTransport(e.target.value)}
+              onChange={(e) => {
+                const nextTransport = e.target.value;
+                setTransport(nextTransport);
+                const presets = adapterOptions[nextTransport] || [];
+                if (
+                  !adapterKey ||
+                  (presets.length > 0 && !presets.includes(adapterKey))
+                ) {
+                  setAdapterKey(presets[0] || "");
+                }
+              }}
             >
               <option value="http">http</option>
               <option value="mq">mq</option>
+              <option value="channel">channel</option>
             </select>
           </div>
           <div className="space-y-1">
@@ -199,15 +278,31 @@ export default function EditEndpointPage() {
               id="adapterKey"
               value={adapterKey}
               onChange={(e) => setAdapterKey(e.target.value)}
+              list={availableAdapters.length ? adapterListId : undefined}
+              placeholder={t("endpoints.fields.adapter.placeholder")}
             />
+            {availableAdapters.length > 0 && (
+              <datalist id={adapterListId}>
+                {availableAdapters.map((opt) => (
+                  <option key={opt} value={opt} />
+                ))}
+              </datalist>
+            )}
           </div>
         </div>
         <div className="space-y-1">
-          <Label htmlFor="endpointUrl">{t("endpoints.fields.httpUrl")}</Label>
+          <Label htmlFor="endpointUrl">
+            {transport === "channel"
+              ? t("apis.fields.apiUrl")
+              : t("endpoints.fields.httpUrl")}
+          </Label>
           <Input
             id="endpointUrl"
             value={endpointUrl}
             onChange={(e) => setEndpointUrl(e.target.value)}
+            placeholder={
+              transport === "channel" ? "https://api.weixin.qq.com" : undefined
+            }
           />
         </div>
         <div className="space-y-1">
@@ -321,6 +416,9 @@ export default function EditEndpointPage() {
                     (m: any) => m.message_definition_bid === newMsgBid,
                   )?.type || null,
                   t,
+                  messageDefs.find(
+                    (m: any) => m.message_definition_bid === newMsgBid,
+                  )?.schema || null,
                 )}
                 formData={newMappingObj}
                 onChange={(val) => {
@@ -336,16 +434,42 @@ export default function EditEndpointPage() {
                   {t("endpoints.dispatch.mailMappingHint")}
                 </p>
               )}
-              <div className="space-y-1">
-                <Label htmlFor="mapping2">
-                  {t("endpoints.dispatch.mappingJsonAdvanced")}
-                </Label>
-                <Textarea
-                  id="mapping2"
-                  className="font-mono"
-                  value={newMappingText}
-                  onChange={(e) => {
-                    setNewMappingText(e.target.value);
+          <div className="space-y-1">
+            <Label htmlFor="mapping2">
+              {t("endpoints.dispatch.mappingJsonAdvanced")}
+            </Label>
+            {adapterKey === "channel.wechat_official_account" && (
+              <div className="flex flex-wrap gap-2 text-xs mb-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    const preset = {
+                      touser: "${openid}",
+                      template_id: "${template_id}",
+                      data: {
+                        first: { value: "${title}" },
+                        remark: { value: "${remark}" },
+                      },
+                      link: { type: "url", url: "${link_url}" },
+                    };
+                    setNewMappingObj(preset);
+                    setNewMappingText(JSON.stringify(preset, null, 2));
+                  }}
+                >
+                  使用微信模板映射示例
+                </Button>
+                <span className="text-muted-foreground">
+                  预填 touser/template_id/data/link，按需改变量名
+                </span>
+              </div>
+            )}
+            <Textarea
+              id="mapping2"
+              className="font-mono"
+              value={newMappingText}
+              onChange={(e) => {
+                setNewMappingText(e.target.value);
                     try {
                       setNewMappingObj(JSON.parse(e.target.value || "{}"));
                     } catch {}
@@ -431,6 +555,89 @@ export default function EditEndpointPage() {
             </p>
           )}
         </div>
+        {adapterKey === "channel.wechat_official_account" && (
+          <div className="space-y-2 rounded-lg border p-3">
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm font-medium">微信模板消息测试</h3>
+              <span className="text-xs text-muted-foreground">
+                基于消息定义的 JSON Schema 填写测试数据
+              </span>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label htmlFor="wechatMsgDef">选择消息定义</Label>
+                <select
+                  id="wechatMsgDef"
+                  className="border rounded-md h-9 px-3 text-sm w-full"
+                  value={wechatTestMsgBid}
+                  onChange={(e) => setWechatTestMsgBid(e.target.value)}
+                >
+                  <option value="">请选择消息定义</option>
+                  {messageDefs.map((m) => (
+                    <option
+                      key={m.message_definition_bid}
+                      value={m.message_definition_bid}
+                    >
+                      {m.name} ({m.type || "custom"})
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="wechatApiKey">X-API-Key</Label>
+                <Input
+                  id="wechatApiKey"
+                  value={wechatTestApiKey}
+                  onChange={(e) => setWechatTestApiKey(e.target.value)}
+                  placeholder="填入后端创建的 API Key"
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>消息体（根据 JSON Schema 自动生成）</Label>
+              <RjsfForm
+                schema={wechatTestSchema}
+                formData={wechatTestPayloadObj}
+                onChange={(val) => {
+                  setWechatTestPayloadObj(val);
+                  setWechatTestPayloadText(JSON.stringify(val ?? {}, null, 2));
+                }}
+              />
+              <Label htmlFor="wechatPayload">手动编辑 JSON（可选）</Label>
+              <Textarea
+                id="wechatPayload"
+                className="font-mono"
+                value={wechatTestPayloadText}
+                onChange={(e) => {
+                  const text = e.target.value;
+                  setWechatTestPayloadText(text);
+                  try {
+                    const obj = JSON.parse(text || "{}");
+                    setWechatTestPayloadObj(obj);
+                  } catch {}
+                }}
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onSendWechatTest}
+                disabled={wechatTestLoading || !wechatTestMsgBid}
+              >
+                {wechatTestLoading ? "发送中..." : "发送微信测试"}
+              </Button>
+            </div>
+            {wechatTestError && (
+              <p className="text-xs text-red-600">{wechatTestError}</p>
+            )}
+            {wechatTestResult && (
+              <pre className="text-xs text-muted-foreground whitespace-pre-wrap break-all bg-muted/30 p-2 rounded">
+                {wechatTestResult}
+              </pre>
+            )}
+          </div>
+        )}
         {error && <p className="text-sm text-red-600">{error}</p>}
         <div className="flex gap-2">
           <Button type="submit" disabled={loading}>

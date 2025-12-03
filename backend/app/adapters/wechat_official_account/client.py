@@ -44,6 +44,7 @@ class WechatOfficialAccountClient:
         message: WechatOfficialAccountMessage,
         *,
         force_refresh_token: bool = False,
+        app_secret: str | None = None,
     ) -> SendResult:
         app_id = message.app_id or self._config.app_id
         if not app_id:
@@ -51,6 +52,7 @@ class WechatOfficialAccountClient:
         access_token = self._token_provider.get_token(
             db,
             app_id=app_id,
+            app_secret=app_secret,
             force_refresh=force_refresh_token,
         )
         payload = self._build_template_payload(message)
@@ -69,6 +71,7 @@ class WechatOfficialAccountClient:
         *,
         payload: dict[str, Any],
         app_id: str | None = None,
+        app_secret: str | None = None,
         force_refresh_token: bool = False,
     ) -> SendResult:
         app_id = app_id or self._config.app_id
@@ -77,6 +80,7 @@ class WechatOfficialAccountClient:
         access_token = self._token_provider.get_token(
             db,
             app_id=app_id,
+            app_secret=app_secret,
             force_refresh=force_refresh_token,
         )
         data = self._post(

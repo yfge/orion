@@ -29,6 +29,7 @@ class WechatTemplateMessageRequest(BaseModel):
     language: str | None = Field(default=None, max_length=10)
     idempotency_key: str | None = Field(default=None, alias="client_msg_id")
     app_id: str | None = Field(default=None, alias="appid", description="Override AppID when多账号场景")
+    app_secret: str | None = Field(default=None, alias="appsecret", description="AppSecret override when multi-account")
 
     model_config = {
         "populate_by_name": True,

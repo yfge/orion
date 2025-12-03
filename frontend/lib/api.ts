@@ -36,11 +36,10 @@ export async function apiFetch(path: string, opts: RequestInit = {}) {
     } catch {
       detail = await res.text();
     }
-    if (
-      res.status === 401 &&
-      typeof window !== "undefined" &&
-      !path.startsWith("/api/v1/auth/")
-    ) {
+    const isAuthPath = path.startsWith("/api/v1/auth/");
+    const isApiKeyPath =
+      path.startsWith("/api/v1/notifications") || path.startsWith("/api/v1/notify");
+    if (res.status === 401 && typeof window !== "undefined" && !isAuthPath && !isApiKeyPath) {
       try {
         clearToken();
       } catch {}
@@ -182,6 +181,14 @@ export async function sendTestToEndpoint(endpointBid: string, text: string) {
   return apiFetch(`/api/v1/endpoints/${endpointBid}/send-test`, {
     method: "POST",
     body: JSON.stringify({ text }),
+  });
+}
+
+export async function sendWechatTemplateTest(payload: any, apiKey?: string | null) {
+  return apiFetch(`/api/v1/notifications/wechat/template`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+    headers: apiKey ? { "X-API-Key": apiKey } : undefined,
   });
 }
 
