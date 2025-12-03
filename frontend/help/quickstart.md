@@ -43,6 +43,7 @@ uvicorn backend.app.main:app --reload
    - Mailgun：`adapter_key=http.mailgun`，配置 URL 与 api_key
    - SendGrid：`adapter_key=http.sendgrid`，配置 URL 与 api_key
    - SMTP：`transport=smtp, adapter_key=smtp.generic`，配置 host/port/TLS/SSL 等
+   - 微信公众号：`transport=channel, adapter_key=channel.wechat_official_account`，配置 `app_id/app_secret/language`（详见“第三方集成 → 微信”）
 3. 新建“消息定义”：进入“消息定义”→“新建”，示例 schema：
 
 ```json

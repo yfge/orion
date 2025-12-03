@@ -43,6 +43,7 @@ Frontend (choose one way to reach backend):
    - Mailgun: `adapter_key=http.mailgun`, configure URL + api_key
    - SendGrid: `adapter_key=http.sendgrid`, configure URL + api_key
    - SMTP: `transport=smtp, adapter_key=smtp.generic`, configure host/port/TLS/SSL
+   - WeChat Official Account: `transport=channel, adapter_key=channel.wechat_official_account`, configure `app_id/app_secret/language` (see “Third‑party → WeChat”)
 3. Message Definition → New, example schema:
 
 ```json

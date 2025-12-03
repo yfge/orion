@@ -198,6 +198,96 @@ Mapping:
 { "subject": "${subject}", "text": "${text}", "html": "<p>${text}</p>" }
 ```
 
+### D: WeChat Official Account (Template Message)
+
+1. Endpoint config (adapter_key = channel.wechat_official_account)
+
+Create an endpoint in “Notify API → New”:
+
+- `transport=channel`
+- `adapter_key=channel.wechat_official_account`
+
+Config example:
+
+```json
+{
+  "app_id": "wx1234567890",
+  "app_secret": "your-app-secret",
+  "language": "zh_CN",
+  "timeout": 5
+}
+```
+
+- `app_id/app_secret`: Service Account credentials from WeChat platform, used to fetch access_token
+- `language`: template language, usually `zh_CN`
+
+2. Message Definition (template)
+
+In “Message Definitions”, create a template-style payload:
+
+```json
+{
+  "template_id": "TM00000001",
+  "to_user": "${openid}",
+  "data": {
+    "first": { "value": "Course booking result" },
+    "time": { "value": "${time}" },
+    "shifu_title": { "value": "${shifu_title}" },
+    "student_name": { "value": "${student_name}" },
+    "teacher_name": { "value": "${teacher_name}" }
+  },
+  "link": {
+    "type": "url",
+    "url": "${link_url}"
+  }
+}
+```
+
+Conventions:
+
+- `to_user` may use `${openid}`; business passes `data.openid` when calling `/notify`
+- `data.*.value` supports `${var}` placeholders
+- `link.url` may reference variables such as `${order_no}`
+
+3. Dispatch mapping (optional)
+
+For simple cases, you usually do not need extra mapping; the message template itself handles `${var}`. If you want to centralize link construction in mapping:
+
+```json
+{
+  "link": {
+    "type": "url",
+    "url": "https://example.com/order/${order_no}"
+  }
+}
+```
+
+4. Notify call example
+
+```bash
+curl -X POST \
+  -H "Authorization: Bearer $API_KEY" \
+  -H "Content-Type: application/json" \
+  http://localhost:8080/api/v1/notify/ \
+  -d '{
+    "message_name": "course-booking-result",
+    "data": {
+      "link_url": "https://example.com/order/ORD20251202001",
+      "time": "2025-11-29 10:00:00~12:00:00",
+      "shifu_title": "TIT Garden",
+      "student_name": "Coco",
+      "teacher_name": "Melody",
+      "openid": "oABCD1234567890"
+    }
+  }'
+```
+
+Orion will:
+
+- Render the template payload from message definition using `data`
+- Merge endpoint config (app_id/app_secret) and mapping
+- Call WeChat template API via the channel gateway and record send_records/send_details
+
 Security notes:
 
 - Keep API keys server‑side; call via backend only

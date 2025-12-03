@@ -197,6 +197,98 @@ curl -H "Authorization: Bearer $API_KEY" \
 
 ```json
 { "subject": "${subject}", "text": "${text}", "html": "<p>${text}</p>" }
+
+### 示例 D：微信公众号（WeChat Official Account）
+
+1. 端点配置（adapter_key = channel.wechat_official_account）：
+
+在“通知 API → 新建”中选择：
+
+- `transport=channel`
+- `adapter_key=channel.wechat_official_account`
+
+配置示例：
+
+```json
+{
+  "app_id": "wx1234567890",
+  "app_secret": "your-app-secret",
+  "language": "zh_CN",
+  "timeout": 5
+}
+```
+
+说明：
+
+- `app_id/app_secret`：来自公众平台后台的服务号 AppID/AppSecret，用于获取 access_token；
+- `language`：模板消息语言，通常为 `zh_CN`。
+
+2. 消息定义（模板消息）：
+
+在“消息定义”中创建模板消息定义，结构为“模板请求体模板”，例如：
+
+```json
+{
+  "template_id": "TM00000001",
+  "to_user": "${openid}",
+  "data": {
+    "first": { "value": "课程预约结果通知" },
+    "time": { "value": "${time}" },
+    "shifu_title": { "value": "${shifu_title}" },
+    "student_name": { "value": "${student_name}" },
+    "teacher_name": { "value": "${teacher_name}" }
+  },
+  "link": {
+    "type": "url",
+    "url": "${link_url}"
+  }
+}
+```
+
+约定：
+
+- `to_user` 可以使用 `${openid}` 这种占位符，业务在调用 `/notify` 时传入 `data.openid`；
+- `data` 下各字段的 `value` 支持 `${var}` 模板占位；
+- `link.url` 支持 `${order_no}` 等占位，用于跳转详情页。
+
+3. 派发映射（可选）：
+
+对于简单场景，一般无需额外映射，直接依赖消息定义中的 `${var}` 占位即可。如果需要补充 link 信息，可以在映射中只填 link：
+
+```json
+{
+  "link": {
+    "type": "url",
+    "url": "https://example.com/order/${order_no}"
+  }
+}
+```
+
+4. 业务侧调用示例：
+
+```bash
+curl -X POST \
+  -H "Authorization: Bearer $API_KEY" \
+  -H "Content-Type: application/json" \
+  http://localhost:8080/api/v1/notify/ \
+  -d '{
+    "message_name": "课程预约结果通知",
+    "data": {
+      "link_url": "https://example.com/order/ORD20251202001",
+      "time": "2025-11-29 10:00:00~12:00:00",
+      "shifu_title": "TIT园地",
+      "student_name": "可可",
+      "teacher_name": "麦多多-英文,melody",
+      "openid": "oABCD1234567890"
+    }
+  }'
+```
+
+发送后：
+
+- Orion 会按消息定义渲染模板，生成 WeChat 消息体；
+- 根据 endpoint 配置中的 app_id/app_secret 获取 access_token 并调用公众号模板消息接口；
+- 发送记录可在“发送记录”中按 message_name / endpoint 过滤查看。
 ```
 
 - 仅在服务端存放 API Key；所有调用通过后端转发
